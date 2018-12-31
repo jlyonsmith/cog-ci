@@ -1,10 +1,10 @@
 import config from "config"
 import { DB, MS, getLog, isProduction } from "../../lib"
-import { PDFHandlers } from "./PDFHandlers"
+import { SlackHandlers } from "./SlackHandlers"
 
-class PDFActor {
+class SlackActor {
   async run() {
-    const serviceName = config.get("serviceName.pdf")
+    const serviceName = config.get("serviceName.slack")
     let log = getLog(serviceName)
     let container = { log }
 
@@ -30,7 +30,7 @@ class PDFActor {
       log.info(`Connected to MongoDB at ${uri.mongo}`)
       log.info(`Connected to RabbitMQ at ${uri.amqp}`)
 
-      container.handlers = new PDFHandlers(container)
+      container.handlers = new SlackHandlers(container)
 
       await ms.listen(container.handlers)
     } catch (error) {
@@ -48,7 +48,7 @@ class PDFActor {
   }
 }
 
-const actor = new PDFActor()
+const actor = new SlackActor()
 
 actor
   .run()
