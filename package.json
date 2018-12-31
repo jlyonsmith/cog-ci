@@ -1,0 +1,77 @@
+{
+  "name": "cog-ci",
+  "version": "1.0.0",
+  "description": "Cog Continuous Integration Server",
+  "main": "dist/server.js",
+  "scripts": {
+    "start": "babel-node src/server.js",
+    "start:prod": "NODE_ENV=production node build/server.js",
+    "build": "rm -rf build && babel src -d build -s",
+    "test": "jest $*",
+    "deploy": "ansible-playbook --user ubuntu --inventory-file $BPT_ROOT/devops/inventories/test-hosts --private-key $HOME/.ssh/$BPT_USER $BPT_ROOT/devops/playbooks/deploy-server.yml",
+    "actor:integration": "monzilla 'src/actor/integration/**/*.js:src/lib/**/*.js:config/**/*' -- babel-node src/actor/integration/index.js",
+    "actor:integration:debug": "babel-node --inspect-brk src/actor/integration/index.js",
+    "actor:git": "monzilla 'src/actor/git/**/*.js:src/lib/**/*.js' -- babel-node src/actor/git/index.js",
+    "actor:git:debug": "babel-node --inspect-brk src/actor/git/index.js",
+    "actor:record": "monzilla 'src/actor/record/**/*.js:src/lib/**/*.js' -- babel-node src/actor/record/index.js",
+    "actor:record:debug": "babel-node --inspect-brk src/actor/record/index.js",
+    "actor:schedule": "monzilla 'src/actor/schedule/**/*.js:src/lib/**/*.js' -- babel-node src/actor/schedule/index.js",
+    "actor:schedule:debug": "babel-node --inspect-brk src/actor/schedule/index.js",
+    "actor:slack": "monzilla 'src/actor/slack/**/*.js:src/lib/**/*.js' -- babel-node src/actor/slack/index.js",
+    "actor:slack:debug": "babel-node --inspect-brk src/actor/slack/index.js",
+    "actor:web": "monzilla 'src/actor/web/**/*.js:src/lib/**/*.js' -- babel-node src/actor/web/index.js",
+    "actor:web:debug": "babel-node --inspect-brk src/actor/web/index.js"
+  },
+  "keywords": [
+    "ci",
+    "continuous",
+    "integration",
+    "server"
+  ],
+  "author": "John Lyon-Smith",
+  "license": "MIT",
+  "jest": {
+    "verbose": true,
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/build/"
+    ],
+    "collectCoverage": true,
+    "coverageDirectory": "coverage"
+  },
+  "dependencies": {
+    "amqplib": "^0.5.1",
+    "autobind-decorator": "^2.1.0",
+    "config": "^1.25.1",
+    "consul": "^0.34.0",
+    "cors": "^2.8.3",
+    "eventemitter3": "^3.1.0",
+    "express": "^4.15.2",
+    "flat": "^4.1.0",
+    "http-errors": "^1.6.1",
+    "mongodb": "^3.1.8",
+    "mongoose": "^5.3.4",
+    "mongoose-doc-merge": "^1.0.1",
+    "pino": "^4.10.1",
+    "pino-pretty-express": "^1.0.4",
+    "redis": "^2.7.1",
+    "tmp-promise": "^1.0.4",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.5",
+    "@babel/node": "^7.0.0",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/plugin-proposal-decorators": "^7.1.6",
+    "@babel/plugin-proposal-optional-chaining": "^7.0.0",
+    "@babel/plugin-syntax-object-rest-spread": "^7.0.0",
+    "@babel/preset-env": "^7.1.5",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-jest": "^23.6.0",
+    "istanbul-api": "^1.2.2",
+    "istanbul-reports": "^1.1.4",
+    "jest-cli": "^23.6.0",
+    "monzilla": "^1.1.0"
+  }
+}

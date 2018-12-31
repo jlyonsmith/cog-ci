@@ -1,0 +1,120 @@
+{
+  filenames: [
+    "package.json",
+    "src/version.js",
+    "scratch/version.txt",
+    "scratch/version.tag.txt",
+    "scratch/version.desc.txt"
+  ],
+  buildFormat: "full",
+  tags: {
+    major: 10,
+    minor: 1,
+    patch: 2,
+    build: 20181219,
+    revision: 0,
+    sequence: 30,
+    tz: "America/Los_Angeles",
+    title: "Brown Paper Tickets",
+    copyright: "© 2018, Brown Paper Tickets.",
+    supportEmail: "support@brownpapertickets.com"
+  },
+  fileTypes: [
+    {
+      name: "Node Package",
+      glob: "**/package.json",
+      update: {
+        search: "^(?<begin> *\"version\" *: *\")\\d+\\.\\d+\\.\\d+(?<end>\" *, *)$",
+        replace: "${begin}${major}.${minor}.${patch}${end}"
+      }
+    },
+    {
+      name: "Javascript File",
+      glob: "**/version.js",
+      updates: [
+        {
+          search: "^(?<begin>\\s*version:\\s*\")\\d+\\.\\d+\\.\\d+(?<end>\",\\s*)$",
+          replace: "${begin}${major}.${minor}.${patch}${end}"
+        },
+        {
+          search: "^(?<begin>\\s*fullVersion:\\s*\")\\d+\\.\\d+\\.\\d+-\\d+\\.\\d+(?<end>\",\\s*)$",
+          replace: "${begin}${major}.${minor}.${patch}-${build}.${revision}${end}"
+        },
+        {
+          search: "^(?<begin>\\s*title:\\s*\")[^\"]*(?<end>\",\\s*)$",
+          replace: "${begin}${title}${end}"
+        },
+        {
+          search: "^(?<begin>\\s*copyright:\\s*\")[^\"]*(?<end>\",\\s*)$",
+          replace: "${begin}${copyright}${end}"
+        },
+        {
+          search: "^(?<begin>\\s*supportEmail:\\s*\")[^\"]*(?<end>\",\\s*)$",
+          replace: "${begin}${supportEmail}${end}"
+        }
+      ]
+    },
+    {
+      name: "Xcode Info PList",
+      glob: "**/info.plist",
+      updates: [
+        {
+          search: "(?<begin>CFBundleVersion</key>\n[\t ]*<string>)(\\d+\\.\\d+)(?<end></string>)",
+          replace: "${begin}${build}.${revision}${end}"
+        },
+        {
+          search: "(?<begin>CFBundleShortVersionString</key>\n[\t ]*<string>)(\\d+\\.\\d+\\.\\d+)(?<end></string>)",
+          replace: "${begin}${major}.${minor}.${patch}${end}"
+        }
+      ]
+    },
+    {
+      name: "Gradle Script",
+      glob: "**/build.gradle",
+      updates: [
+        {
+          search: "(?<begin>versionCode +)\\d+",
+          replace: "${begin}${sequence}"
+        },
+        {
+          search: "(?<begin>versionName +\")\\d+\\.\\d+\\.\\d+(?<end>\")",
+          replace: "${begin}${major}.${minor}.${patch}${end}"
+        }
+      ]
+    },
+    {
+      name: "Android Manifest",
+      glob: "**/AndroidManifest.xml",
+      updates: [
+        {
+          search: "(?<begin>android:versionCode=\")\\d?(?<end>\")",
+          replace: "${begin}${sequence}${end}"
+        },
+        {
+          search: "(?<begin>android:versionName=\")\\d+\\.\\d+\\.\\d+(?<end>\")",
+          replace: "${begin}${major}.${minor}.${patch}${end}"
+        }
+      ]
+    },
+    {
+      name: "Commit tag file",
+      glob: "**/version.tag.txt",
+      write: "v${major}.${minor}.${patch}"
+    },
+    {
+      name: "Full version file",
+      glob: "**/version.txt",
+      write: "${major}.${minor}.${patch}-${build}.${revision}"
+    },
+    {
+      name: "Commit tag description file",
+      glob: "**/version.desc.txt",
+      write: "Version ${major}.${minor}.${patch}-${build}.${revision}"
+    },
+    {
+      name: "Website environment file",
+      glob: "**/.env",
+      write: "REACT_APP_TITLE=${title}"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  logDir: "/var/log/cog",
+  api: {
+    port: 3001,
+    loginKey: "*",
+    uploadTimout: 120,
+    maxEmailTokenAgeInHours: 36,
+    sendEmailDelayInSeconds: 3,
+  },
+}

@@ -1,0 +1,22 @@
+{
+  logDir: "",
+  actors: [
+    { name: "web" },
+    { name: "integration" },
+    { name: "git" },
+    { name: "schedule" },
+    { name: "slack" },
+  ],
+  serviceName: {
+    system: "cog",
+    server: "cog-server",
+    web: "cog-web",
+    integration: "cog-integration",
+    git: "cog-git",
+    schedule: "cog-schedule",
+    slack: "cog-slack",
+  },
+  api: {
+    port: "3001",
+  },
+}
