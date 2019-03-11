@@ -16,7 +16,11 @@
     schedule: "cog-schedule",
     slack: "cog-slack",
   },
-  api: {
-    port: "3001",
+  web: {
+    port: "8005",
+  },
+  slack: {
+    buildChannel: "dev-bots",
+    pullRequestChannel: "dev-bots",
   },
 }

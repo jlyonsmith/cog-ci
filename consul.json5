@@ -1,0 +1,20 @@
+{
+  "cog": {
+    "config": {
+      "production": {
+        "uri": {
+          "amqp": "amqp://localhost",
+          "mongo": "mongodb://localhost/cog-v1",
+          "redis": "redis://localhost",
+        },
+      },
+      "development": {
+        "uri": {
+          "amqp": "amqp://localhost",
+          "mongo": "mongodb://localhost/cog-v1",
+          "redis": "redis://localhost",
+        },
+      }
+    }
+  }
+}

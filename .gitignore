@@ -3,6 +3,9 @@
 # dependencies
 /node_modules
 
+# config
+/config/**/local-*.js*
+
 # testing
 /coverage
 

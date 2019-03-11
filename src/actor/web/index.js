@@ -1,45 +1,98 @@
-export { BaseRoutes } from "./BaseRoutes"
-export { AuthRoutes } from "./AuthRoutes"
-export { AssetRoutes } from "./AssetRoutes"
-export { UserRoutes } from "./UserRoutes"
-export { SystemRoutes } from "./SystemRoutes"
-export { ShippingRoutes } from "./ShippingRoutes"
-export { EventRoutes } from "./EventRoutes"
-// Error handlers
-import { mongooseValidation } from "../errorHandlers/mongooseValidation"
-import { mongooseValidator } from "../errorHandlers/mongooseValidator"
-import { httpErrorHandler } from "../errorHandlers/httpErrorHandler"
-export const isProduction = process.env.NODE_ENV === "production"
-const errorHandlers = [mongooseValidation, mongooseValidator, httpErrorHandler]
-const unknownError = {
-  code: 500,
-  value: {
-    errors: [{ errorType: "unknown", errorMessage: "Unknown Error." }],
-  },
-}
+import config from "config"
+import express from "express"
+import * as pinoExpress from "pino-pretty-express"
+import http from "http"
+import { DB, MQ, getLog, isProduction } from "../../lib"
+import createError from "http-errors"
+import * as Routes from "./routes"
 
-export function catchAll(routeHandler) {
-  return async (req, res, next) => {
+class WebActor {
+  async run() {
+    const serviceName = config.get("serviceName.web")
+    let log = getLog(serviceName)
+    let container = { log }
+
     try {
-      await routeHandler(req, res, next)
-    } catch (err) {
-      // The default error response is an unknown error.
-      let response = unknownError
+      let app = express()
+      let server = http.createServer(app)
 
-      // Replace the default response with a custom error if one exists.
-      for (let errorHandler of errorHandlers) {
-        if (errorHandler.canHandleError(err)) {
-          response = errorHandler.createResponse(err)
-          break
+      container.app = app
+      container.server = server
+
+      app.use(pinoExpress.config({ log }))
+
+      const db = new DB(container)
+      container.db = db
+      const mq = new MQ(serviceName, container)
+      container.mq = mq
+
+      const uri = await config.get("uri")
+
+      await Promise.all([
+        db.connect(
+          uri.mongo,
+          isProduction
+        ),
+        mq.connect(uri.amqp),
+      ])
+
+      log.info(`Connected to MongoDB at ${uri.mongo}`)
+      log.info(`Connected to RabbitMQ at ${uri.amqp}`)
+
+      container.logRoutes = new Routes.LogRoutes(container)
+
+      app.use(function(req, res, next) {
+        res.status(404).json({
+          message: "Not found",
+        })
+      })
+      app.use(function(err, req, res, next) {
+        if (!isProduction) {
+          log.error(err)
         }
-      }
 
-      // Debug errors in development environment.
-      if (!isProduction) {
-        console.log(err)
-      }
+        if (!err.status) {
+          err = createError.InternalServerError(err.message)
+        }
 
-      res.status(response.code).json(response.value)
+        res.status(err.status).json({
+          message: err.message,
+          detail: err.detail,
+        })
+      })
+
+      let port = config.get("web.port")
+      server.listen(port)
+      log.info(`Cog CI web server started on port ${port}`)
+    } catch (error) {
+      if (log) {
+        log.error(error.message)
+      }
+      if (container.ms) {
+        container.ms.disconnect()
+      }
+      if (container.db) {
+        container.db.disconnect()
+      }
+      if (container.rs) {
+        container.rs.disconnect()
+      }
+      if (container.server) {
+        container.server.close()
+      }
+      throw error
     }
   }
 }
+
+const actor = new WebActor()
+
+actor
+  .run()
+  .then((exitCode) => {
+    process.exitCode = exitCode
+  })
+  .catch((error) => {
+    console.log(error)
+    process.exit(200)
+  })

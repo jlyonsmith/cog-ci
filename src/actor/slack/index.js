@@ -1,41 +1,38 @@
 import config from "config"
 import { DB, MS, getLog, isProduction } from "../../lib"
 import { SlackHandlers } from "./SlackHandlers"
+import { RTMClient, WebClient } from "@slack/client"
+import assert from "assert"
 
 class SlackActor {
   async run() {
     const serviceName = config.get("serviceName.slack")
     let log = getLog(serviceName)
     let container = { log }
+    const uri = await config.get("uri")
 
-    try {
-      const ms = new MS(serviceName, { durable: false }, container)
+    container.ms = new MS(serviceName, { durable: false }, container)
+    container.db = new DB(container)
+    container.slack = config.get("slack")
+    container.rtm = new RTMClient(container.slack.token)
+    container.web = new WebClient(container.slack.token)
 
-      container.ms = ms
+    await Promise.all([
+      container.db.connect(uri.mongo, isProduction),
+      container.ms.connect(uri.amqp),
+    ])
 
-      const db = new DB(container)
+    log.info(`Connected to MongoDB at ${uri.mongo}`)
+    log.info(`Connected to RabbitMQ at ${uri.amqp}`)
 
-      container.db = db
+    container.handlers = new SlackHandlers(container)
 
-      const uri = await config.get("uri")
-
-      await Promise.all([
-        db.connect(
-          uri.mongo,
-          isProduction
-        ),
-        ms.connect(uri.amqp),
-      ])
-
-      log.info(`Connected to MongoDB at ${uri.mongo}`)
-      log.info(`Connected to RabbitMQ at ${uri.amqp}`)
-
-      container.handlers = new SlackHandlers(container)
-
-      await ms.listen(container.handlers)
-    } catch (error) {
+    process.on("unhandledRejection", (error) => {
       if (log) {
         log.error(error.message)
+      }
+      if (container.rtm) {
+        container.rtm.disconnect()
       }
       if (container.ms) {
         container.ms.disconnect()
@@ -44,7 +41,9 @@ class SlackActor {
         container.db.disconnect()
       }
       throw error
-    }
+    })
+
+    await container.ms.listen(container.handlers)
   }
 }
 
