@@ -77,8 +77,6 @@ export class SlackHandlers {
   }
 
   async onMessage(message) {
-    console.log(message)
-
     const isUserMessage = message.subtype === undefined
     const isBotMessage = message.subtype && message.subtype !== "bot_message"
 
@@ -114,7 +112,7 @@ export class SlackHandlers {
     const isFromChannel =
       message.channel[0] === "C" || message.channel[0] === "G"
 
-    // Don't responding if the message is from a channel and our nome is not in the message
+    // Don't responding if the message is from a channel and our name is not in the message
     if (isFromChannel && !text.match(new RegExp("<@" + botUserId + ">"))) {
       return
     }
