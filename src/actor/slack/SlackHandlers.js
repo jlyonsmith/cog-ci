@@ -33,7 +33,9 @@ export class SlackHandlers {
       }), team id ${this.rtm.activeTeamId}`
     )
 
-    const conversationsListResponse = await this.web.channels.list()
+    const conversationsListResponse = await this.rtm.webClient.conversations.list(
+      { types: "private_channel" }
+    )
 
     // TODO: Refresh this when it changes
     const conversationNameToId = conversationsListResponse.channels.reduce(

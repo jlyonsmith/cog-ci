@@ -1,8 +1,8 @@
 import config from "config"
 import { DB, MS, getLog, isProduction } from "../../lib"
 import { SlackHandlers } from "./SlackHandlers"
-import { RTMClient, WebClient } from "@slack/client"
-import assert from "assert"
+import { RTMClient } from "@slack/rtm-api"
+import { WebClient } from "@slack/web-api"
 
 class SlackActor {
   async run() {

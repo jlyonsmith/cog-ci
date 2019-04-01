@@ -38,7 +38,8 @@
     "coverageDirectory": "coverage"
   },
   "dependencies": {
-    "@slack/client": "^4.8.0",
+    "@slack/rtm-api": "^5.0.0",
+    "@slack/web-api": "^5.0.0",
     "amqplib": "^0.5.3",
     "autobind-decorator": "^2.4.0",
     "config": "^3.0.1",
