@@ -37,6 +37,8 @@ export class SlackHandlers {
       { types: "private_channel" }
     )
 
+    console.log("#$$$#", conversationsListResponse)
+
     // TODO: Refresh this when it changes
     const conversationNameToId = conversationsListResponse.channels.reduce(
       (map, channel) => {
@@ -82,12 +84,14 @@ export class SlackHandlers {
     const isUserMessage = message.subtype === undefined
     const isBotMessage = message.subtype && message.subtype !== "bot_message"
 
+    console.log("I GOT A MESSAGE", message)
+
     // Only respoond to messages from users or bots
     if (!isUserMessage && !isBotMessage) {
       return
     }
 
-    const text = message.text.trim()
+    const text = message.text?.trim()
 
     // Nothing to do if no text
     if (!text) {
@@ -114,16 +118,102 @@ export class SlackHandlers {
     const isFromChannel =
       message.channel[0] === "C" || message.channel[0] === "G"
 
-    // Don't responding if the message is from a channel and our name is not in the message
+    // Don't respond if the message is from a channel and our name is not in the message
     if (isFromChannel && !text.match(new RegExp("<@" + botUserId + ">"))) {
       return
     }
 
+    // test-bot channel id :: GHLMQCMPH
     const handlers = [
       {
         regexp: /stop +build +(bb-\d+)/i,
-        func: (arr) => this.doStop(arr[1], isFromChannel, sendingUserName),
+        func: (slackResponse) =>
+          this.doStop(slackResponse[1], isFromChannel, sendingUserName),
       },
+      {
+        regexp: /test/i,
+        func: (slackResponse) => {
+          console.log("USER HAS TRIGGERED A TEST", slackResponse)
+        },
+      },
+      {
+        regexp: /build+([a-z0-9, \.]+)/i,
+        func: (slackResponse) => {
+          console.log("****** USER HAS TRIGGERED A BUILD")
+          this.web.chat.postMessage({
+            channel: "GHLMQCMPH",
+            text: "Build request made",
+            as_user: true,
+          })
+        },
+      },
+      {
+        regexp: /(?:show +)?status/,
+        func: (slackResponse) => {
+          console.log("****** USER HAS REQUESTED A STATUS UPDATE")
+          this.web.chat.postMessage({
+            channel: "GHLMQCMPH",
+            text: "Status update requested",
+            as_user: true,
+          })
+        },
+      },
+      {
+        regexp: /show +(?:last +([0-9]+) +)?builds/,
+        func: (slackResponse) => {
+          console.log("****** USER HAS REQUESTED A LIST OF BUILDS")
+          this.web.chat.postMessage({
+            channel: "GHLMQCMPH",
+            text: "List of builds requested",
+            as_user: true,
+          })
+        },
+      },
+      {
+        regexp: /show report/,
+        func: (slackResponse) => {
+          console.log("****** USER HAS REQUESTED A REPORT")
+          this.web.chat.postMessage({
+            channel: "GHLMQCMPH",
+            text: "Report requested",
+            as_user: true,
+          })
+        },
+      },
+      {
+        regexp: /show queue/,
+        func: (slackResponse) => {
+          console.log("****** USER HAS REQUESTED A THE QUEUE")
+          this.web.chat.postMessage({
+            channel: "GHLMQCMPH",
+            text: "Queue requested",
+            as_user: true,
+          })
+        },
+      },
+      {
+        regexp: /help/i,
+        func: (slackResponse) => {
+          console.log("****** USER HAS REQUESTED HELP")
+          this.web.chat.postMessage({
+            channel: "GHLMQCMPH",
+            text: "Help requested",
+            as_user: true,
+          })
+        },
+      },
+      {
+        regexp: /^relay(.*)/i,
+        func: (slackResponse) => {
+          console.log("****** USER WANTS TO RELAY TO BITBUCKET")
+          this.web.chat.postMessage({
+            channel: "GHLMQCMPH",
+            text: "Bitbucket Relay Requested",
+            as_user: true,
+          })
+        },
+      },
+
       // when /build +([a-z0-9, \.]+)/i
       //   do_build $1, is_from_slack_channel, slack_user_name
       // when /(?:show +)?status/
@@ -146,6 +236,24 @@ export class SlackHandlers {
       //   "Sorry#{is_from_slack_channel ? ' ' + slack_user_name : ''}, I'm not sure how to respond."
       //              end
     ]
+    let hasHandler = false
+    for (const handler in handlers) {
+      const currentHandler = handlers[handler]
+      if (currentHandler.regexp.test(message.text)) {
+        hasHandler = true
+        currentHandler.func(message)
+        // optional "break" here (or check hasHandler) if we only ever want a single match in the handlers regex
+      }
+    }
+    if (!hasHandler) {
+      console.log("****** USER HAS SUBMITTED AN UN-HANDLEABLE MESSAGE")
+      this.web.chat.postMessage({
+        channel: "GHLMQCMPH",
+        text: "NOTE: Command not recognized by COG. Do better.",
+        // icon_emoji: ":fr:",
+        as_user: true,
+      })
+    }
 
     this.log.info("It's not a hamster!")
   }
