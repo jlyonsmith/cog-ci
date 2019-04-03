@@ -37,8 +37,6 @@ export class SlackHandlers {
       { types: "private_channel" }
     )
 
-    console.log("#$$$#", conversationsListResponse)
-
     // TODO: Refresh this when it changes
     const conversationNameToId = conversationsListResponse.channels.reduce(
       (map, channel) => {
@@ -126,18 +124,18 @@ export class SlackHandlers {
     // test-bot channel id :: GHLMQCMPH
     const handlers = [
       {
-        regexp: /stop +build +(bb-\d+)/i,
+        regexp: /^stop +build +(bb-\d+)/i,
         func: (slackResponse) =>
           this.doStop(slackResponse[1], isFromChannel, sendingUserName),
       },
       {
-        regexp: /test/i,
+        regexp: /^test/i,
         func: (slackResponse) => {
           console.log("USER HAS TRIGGERED A TEST", slackResponse)
         },
       },
       {
-        regexp: /build+([a-z0-9, \.]+)/i,
+        regexp: /^build+([a-z0-9, \.]+)/i,
         func: (slackResponse) => {
           console.log("****** USER HAS TRIGGERED A BUILD")
           this.web.chat.postMessage({
@@ -148,7 +146,7 @@ export class SlackHandlers {
         },
       },
       {
-        regexp: /(?:show +)?status/,
+        regexp: /^(?:show +)?status/,
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED A STATUS UPDATE")
           this.web.chat.postMessage({
@@ -159,7 +157,7 @@ export class SlackHandlers {
         },
       },
       {
-        regexp: /show +(?:last +([0-9]+) +)?builds/,
+        regexp: /^show +(?:last +([0-9]+) +)?builds/,
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED A LIST OF BUILDS")
           this.web.chat.postMessage({
@@ -170,7 +168,7 @@ export class SlackHandlers {
         },
       },
       {
-        regexp: /show report/,
+        regexp: /^show report/,
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED A REPORT")
           this.web.chat.postMessage({
@@ -181,7 +179,7 @@ export class SlackHandlers {
         },
       },
       {
-        regexp: /show queue/,
+        regexp: /^show queue/,
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED A THE QUEUE")
           this.web.chat.postMessage({
@@ -192,7 +190,7 @@ export class SlackHandlers {
         },
       },
       {
-        regexp: /help/i,
+        regexp: /^help/i,
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED HELP")
           this.web.chat.postMessage({
@@ -248,7 +246,7 @@ export class SlackHandlers {
     if (!hasHandler) {
       console.log("****** USER HAS SUBMITTED AN UN-HANDLEABLE MESSAGE")
       this.web.chat.postMessage({
-        channel: "GHLMQCMPH",
+        channel: "GHLMQCMPH", // id for test-bot channel
         text: "NOTE: Command not recognized by COG. Do better.",
         // icon_emoji: ":fr:",
         as_user: true,
