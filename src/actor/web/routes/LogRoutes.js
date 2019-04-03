@@ -7,10 +7,11 @@ export class LogRoutes {
 
     this.log = container.log
 
-    app.route("/logs/{id}").get(this.getLog)
+    app.route("/logs/:id").get(this.getLog)
   }
 
   async getLog(req, res, next) {
-    res.json({})
+    const id = req.params.id
+    res.json({ success: true, message: "Success", id })
   }
 }
