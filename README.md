@@ -70,7 +70,7 @@ Firstly, set up a [Slack](https://slack.com) account for your organization. Navi
 3. Give the bot an @ name, following the onscreen instructions.
 4. On the next screen, give the bot a description and copy the API token to the `.bbconfig` file as the `config.slack_api_token` value.
 
-Now you have a build bot configured, start the `build-buddy` script. Next start a private conversation with your bot and ask it something like, "What is your status?" Actually, it will respond to just the words **status** and **help** too.
+Now you have a build bot configured, start the `cog-ci` script. Next start a private conversation with your bot and ask it something like, "What is your status?" Actually, it will respond to just the words **status** and **help** too.
 
 ### GitHub
 
@@ -79,17 +79,17 @@ Next it's time to get GitHub integration working. You'll need to generate a pers
 1. Log in to GitHub as the user that the build will be acting as. It's wise to create a user specifically for builds to avoid giving access to you personal GitHub account.
 2. Go to the drop down in the top right hand corner (the one with the user icon, next to the arrow) and select **Settings** from the menu.
 3. Go to **Personal access tokens** and create a new token.
-4. Give the token a name, including for example the machine the token is used on, the words "build-buddy", etc.. Select repo, repo:status, repo_deployment, public_repo, write:repo_hook, read:repo_hook scopes, then **Generate token**
+4. Give the token a name, including for example the machine the token is used on, the words "cog-cicog-ci", etc.. Select repo, repo:status, repo_deployment, public_repo, write:repo_hook, read:repo_hook scopes, then **Generate token**
 5. Copy the token on this screen into the `config.github_api_token` setting in the `.bbconfig`
 
 Finally, you need to set up a webhook for pull-requests to the repository. Do the steps:
 
-1. In order for GitHub to send events to your `build-buddy` instance you must have an endpoint visible over the Internet. I _strongly_ recommend you only use HTTPS for the webhook events. There are a couple of good ways to create the webhook endpoint:
-   1. Install [ngrok](http://ngrok.com) in order to create a public endpoint that GitHub can send the web hook to. Super easy and a great way to get started. You configure ngrok to forward requests to `build-buddy` on your local machine.
-   2. Use a web server such as [nginx](http://nginx.org) running on the same machine as `build-buddy` that can proxy the requests to `build-buddy`. Instructions on how to configure nginx to that can be found in [nginx Configuration](https://github.com/jlyonsmith/HowTo/blob/master/nginx_configuration.md).
+1. In order for GitHub to send events to your `cog-ci` instance you must have an endpoint visible over the Internet. I _strongly_ recommend you only use HTTPS for the webhook events. There are a couple of good ways to create the webhook endpoint:
+   1. Install [ngrok](http://ngrok.com) in order to create a public endpoint that GitHub can send the web hook to. Super easy and a great way to get started. You configure ngrok to forward requests to `cog-ci` on your local machine.
+   2. Use a web server such as [nginx](http://nginx.org) running on the same machine as `cog-ci` that can proxy the requests to `cog-ci`. Instructions on how to configure nginx to that can be found in [nginx Configuration](https://github.com/jlyonsmith/HowTo/blob/master/nginx_configuration.md).
 2. Once you know the webhook endpoint endpoint, e.g. https://api.mydomain.com/, go to the master repo for the project (the one that all the forks will create pull request too) and select **Settings**
 3. Enter the URL for the webhook, plus the path `/webhook`.
-4. Create secret token using for use by the webhook. This lets `build-buddy` know the call is actually from GitHub:
+4. Create secret token using for use by the webhook. This lets `cog-ci` know the call is actually from GitHub:
 
    ```bash
    ruby -rsecurerandom -e 'puts SecureRandom.hex(20)'
@@ -99,24 +99,24 @@ Finally, you need to set up a webhook for pull-requests to the repository. Do th
 
 5. Finally, select "Let me select individual events" and check the "Pull Request" checkbox
 
-As soon as you save the webhook it will send a `ping` message to the `build-buddy` service. You should get a 200 reponse. If you do then congratulations, GitHub is talking to your `build-buddy` instance. You will now get a buddy build status check on your pull requests.
+As soon as you save the webhook it will send a `ping` message to the `cog-ci` service. You should get a 200 reponse. If you do then congratulations, GitHub is talking to your `cog-ci` instance. You will now get a buddy build status check on your pull requests.
 
 After you have done at least one pull request, you can go to "Settings > Branches" and enable branch protection for any branches you desire, thus _requiring_ buddy builds before commits can be made to those branches.
 
 ### MongoDB
 
-Finally, build-buddy must be configured to write build metrics to a MongoDB database. Setting up MongoDB properly, with it's own user and group and password protected accounts, is straightforward but requires quite a few steps. Follow the instructions in [Installing MongoDB on macOS](https://github.com/jlyonsmith/HowTo/blob/master/Install_MongoDB_on_macOS.md).
+Finally, cog-ci must be configured to write build metrics to a MongoDB database. Setting up MongoDB properly, with it's own user and group and password protected accounts, is straightforward but requires quite a few steps. Follow the instructions in [Installing MongoDB on macOS](https://github.com/jlyonsmith/HowTo/blob/master/Install_MongoDB_on_macOS.md).
 
 Once you have MongoDB up and running, simply add an entry to the `.bbconfig` file:
 
 ```ruby
-config.mongo_uri = "mongodb://user:password@localhost:27017/build-buddy"
+config.mongo_uri = "mongodb://user:password@localhost:27017/cog-ci"
 ```
 
 or if you choose not to use a user/password:
 
 ```ruby
-config.mongo_uri = "mongodb://localhost:27017/build-buddy"
+config.mongo_uri = "mongodb://localhost:27017/cog-ci"
 ```
 
 ### Environment Variables
