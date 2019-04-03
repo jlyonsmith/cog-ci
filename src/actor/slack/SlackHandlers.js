@@ -16,6 +16,8 @@ export class SlackHandlers {
     })
     this.rtm.on("message", this.onMessage)
     this.rtm.start()
+
+    this.botChannelId = "GHLMQCMPH"
   }
 
   async onConnected() {
@@ -139,7 +141,7 @@ export class SlackHandlers {
         func: (slackResponse) => {
           console.log("****** USER HAS TRIGGERED A BUILD")
           this.web.chat.postMessage({
-            channel: "GHLMQCMPH",
+            channel: this.botChannelId,
             text: "Build request made",
             as_user: true,
           })
@@ -150,7 +152,7 @@ export class SlackHandlers {
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED A STATUS UPDATE")
           this.web.chat.postMessage({
-            channel: "GHLMQCMPH",
+            channel: this.botChannelId,
             text: "Status update requested",
             as_user: true,
           })
@@ -161,7 +163,7 @@ export class SlackHandlers {
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED A LIST OF BUILDS")
           this.web.chat.postMessage({
-            channel: "GHLMQCMPH",
+            channel: this.botChannelId,
             text: "List of builds requested",
             as_user: true,
           })
@@ -172,7 +174,7 @@ export class SlackHandlers {
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED A REPORT")
           this.web.chat.postMessage({
-            channel: "GHLMQCMPH",
+            channel: this.botChannelId,
             text: "Report requested",
             as_user: true,
           })
@@ -183,7 +185,7 @@ export class SlackHandlers {
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED A THE QUEUE")
           this.web.chat.postMessage({
-            channel: "GHLMQCMPH",
+            channel: this.botChannelId,
             text: "Queue requested",
             as_user: true,
           })
@@ -194,7 +196,7 @@ export class SlackHandlers {
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED HELP")
           this.web.chat.postMessage({
-            channel: "GHLMQCMPH",
+            channel: this.botChannelId,
             text: "Help requested",
             as_user: true,
           })
@@ -205,7 +207,7 @@ export class SlackHandlers {
         func: (slackResponse) => {
           console.log("****** USER WANTS TO RELAY TO BITBUCKET")
           this.web.chat.postMessage({
-            channel: "GHLMQCMPH",
+            channel: this.botChannelId,
             text: "Bitbucket Relay Requested",
             as_user: true,
           })
@@ -246,7 +248,7 @@ export class SlackHandlers {
     if (!hasHandler) {
       console.log("****** USER HAS SUBMITTED AN UN-HANDLEABLE MESSAGE")
       this.web.chat.postMessage({
-        channel: "GHLMQCMPH", // id for test-bot channel
+        channel: this.botChannelId,
         text: "NOTE: Command not recognized by COG. Do better.",
         // icon_emoji: ":fr:",
         as_user: true,
