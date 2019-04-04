@@ -283,7 +283,7 @@ export class SlackHandlers {
   }
 
   async notifyChannel(request) {
-    this.web.chate.postMessage({
+    this.web.chat.postMessage({
       channel: request.channel || this.botChannelId,
       as_user: true,
       text:
