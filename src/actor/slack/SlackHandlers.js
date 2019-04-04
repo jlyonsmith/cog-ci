@@ -283,10 +283,10 @@ export class SlackHandlers {
   }
 
   async notifyChannel(request) {
-    this.web.chate.postMessage({
+    this.web.chat.postMessage({
       channel: request.channel || this.botChannelId,
       as_user: true,
-      message:
+      text:
         request.message ||
         ":dumpster_fire: Channel notification requested without specifying content.",
     })
