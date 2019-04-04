@@ -1,5 +1,6 @@
 import autobind from "autobind-decorator"
 import { timingSafeEqual } from "crypto"
+import config from "config"
 
 @autobind
 export class SlackHandlers {
@@ -9,6 +10,7 @@ export class SlackHandlers {
     this.slack = container.slack
     this.rtm = container.rtm
     this.web = container.web
+    this.mq = container.mq
 
     this.rtm.on("connected", this.onConnected)
     this.rtm.on("disconnected", () => {
@@ -16,6 +18,8 @@ export class SlackHandlers {
     })
     this.rtm.on("message", this.onMessage)
     this.rtm.start()
+
+    this.botChannelId = "GHLMQCMPH"
   }
 
   async onConnected() {
@@ -82,12 +86,14 @@ export class SlackHandlers {
     const isUserMessage = message.subtype === undefined
     const isBotMessage = message.subtype && message.subtype !== "bot_message"
 
+    console.log("I GOT A MESSAGE", message)
+
     // Only respoond to messages from users or bots
     if (!isUserMessage && !isBotMessage) {
       return
     }
 
-    const text = message.text.trim()
+    const text = message.text?.trim()
 
     // Nothing to do if no text
     if (!text) {
@@ -103,6 +109,7 @@ export class SlackHandlers {
     }
 
     const sendingUserName = this.userIdToUserMap.get(sendingUserId)
+    console.log("##", sendingUserName)
 
     if (!sendingUserName) {
       this.log.warning(
@@ -114,16 +121,116 @@ export class SlackHandlers {
     const isFromChannel =
       message.channel[0] === "C" || message.channel[0] === "G"
 
-    // Don't responding if the message is from a channel and our name is not in the message
+    // Don't respond if the message is from a channel and our name is not in the message
     if (isFromChannel && !text.match(new RegExp("<@" + botUserId + ">"))) {
       return
     }
 
+    // test-bot channel id :: GHLMQCMPH
     const handlers = [
       {
-        regexp: /stop +build +(bb-\d+)/i,
-        func: (arr) => this.doStop(arr[1], isFromChannel, sendingUserName),
+        regexp: /^stop +build +(bb-\d+)/i,
+        func: (slackResponse) =>
+          this.doStop(slackResponse[1], isFromChannel, sendingUserName),
       },
+      {
+        regexp: /^test/i,
+        func: (slackResponse) => {
+          console.log("USER HAS TRIGGERED A TEST", slackResponse)
+        },
+      },
+      {
+        regexp: /^build+([a-z0-9, \.]+)/i,
+        func: (slackResponse) => {
+          console.log("****** USER HAS TRIGGERED A BUILD")
+          this.web.chat.postMessage({
+            channel: this.botChannelId,
+            text: `:building_construction: Build request made by ${
+              sendingUserName.profile.display_name
+            }`,
+            as_user: true,
+          })
+        },
+      },
+      {
+        regexp: /^(?:show +)?status/,
+        func: (slackResponse) => {
+          console.log("****** USER HAS REQUESTED A STATUS UPDATE")
+          this.web.chat.postMessage({
+            channel: this.botChannelId,
+            text: `:shell: Status update requested by ${
+              sendingUserName.profile.display_name
+            }`,
+            as_user: true,
+          })
+        },
+      },
+      {
+        regexp: /^show +(?:last +([0-9]+) +)?builds/,
+        func: (slackResponse) => {
+          console.log("****** USER HAS REQUESTED A LIST OF BUILDS")
+          this.web.chat.postMessage({
+            channel: this.botChannelId,
+            text: `:page_with_curl: List of builds requested by ${
+              sendingUserName.profile.display_name
+            }`,
+            as_user: true,
+          })
+        },
+      },
+      {
+        regexp: /^show report/,
+        func: (slackResponse) => {
+          console.log("****** USER HAS REQUESTED A REPORT")
+          this.web.chat.postMessage({
+            channel: this.botChannelId,
+            text: `:scroll: Report requested by ${
+              sendingUserName.profile.display_name
+            }`,
+            as_user: true,
+          })
+        },
+      },
+      {
+        regexp: /^show queue/,
+        func: (slackResponse) => {
+          console.log("****** USER HAS REQUESTED A THE QUEUE")
+          this.web.chat.postMessage({
+            channel: this.botChannelId,
+            text: `:showmewhatyougot: Queue requested by ${
+              sendingUserName.profile.display_name
+            }`,
+            as_user: true,
+          })
+        },
+      },
+      {
+        regexp: /^help/i,
+        func: (slackResponse) => {
+          console.log("****** USER HAS REQUESTED HELP")
+          this.web.chat.postMessage({
+            channel: this.botChannelId,
+            text: `:sos: Help requested by ${
+              sendingUserName.profile.display_name
+            }`,
+            as_user: true,
+          })
+        },
+      },
+      {
+        regexp: /^relay(.*)/i,
+        func: (slackResponse) => {
+          console.log("****** USER WANTS TO RELAY TO BITBUCKET")
+          this.web.chat.postMessage({
+            channel: this.botChannelId,
+            text: `:zap: Bitbucket Relay Requested by ${
+              sendingUserName.profile.display_name
+            }`,
+            as_user: true,
+          })
+        },
+      },
+
       // when /build +([a-z0-9, \.]+)/i
       //   do_build $1, is_from_slack_channel, slack_user_name
       // when /(?:show +)?status/
@@ -146,11 +253,43 @@ export class SlackHandlers {
       //   "Sorry#{is_from_slack_channel ? ' ' + slack_user_name : ''}, I'm not sure how to respond."
       //              end
     ]
-
-    this.log.info("It's not a hamster!")
+    let hasHandler = false
+    for (const handler in handlers) {
+      const currentHandler = handlers[handler]
+      const cleanText = message.text.replace(`<@${botUserId}>`, "").trim() // if a user addresses/tags @Cog-Ci, we don't want to parse that in our regex handling
+      if (currentHandler.regexp.test(cleanText)) {
+        hasHandler = true
+        currentHandler.func(message)
+        // optional "break" here (or check hasHandler) if we only ever want a single match in the handlers regex
+      }
+    }
+    if (!hasHandler) {
+      console.log("****** USER HAS SUBMITTED AN UN-HANDLEABLE MESSAGE")
+      this.web.chat.postMessage({
+        channel: this.botChannelId,
+        text: `:poopfire: Command not recognized by COG. Do better, ${
+          sendingUserName.profile.display_name
+        }.`,
+        as_user: true,
+      })
+    } else {
+      this.log.info("It's not a hamster!")
+      this.mq.request(
+        config.serviceName.schedule,
+        "slackMessageReceived",
+        message
+      )
+    }
   }
 
   async notifyChannel(request) {
+    this.web.chate.postMessage({
+      channel: request.channel || this.botChannelId,
+      as_user: true,
+      message:
+        request.message ||
+        ":dumpster_fire: Channel notification requested without specifying content.",
+    })
     return {}
   }
 }
