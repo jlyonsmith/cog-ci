@@ -286,7 +286,7 @@ export class SlackHandlers {
     this.web.chate.postMessage({
       channel: request.channel || this.botChannelId,
       as_user: true,
-      message:
+      text:
         request.message ||
         ":dumpster_fire: Channel notification requested without specifying content.",
     })
