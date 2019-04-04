@@ -10,4 +10,9 @@ export class ScheduleHandlers {
   async dummy(request) {
     return {}
   }
+
+  async slackMessageReceived(message) {
+    console.log("**************** MESSEGE RECEIVED BY SCHEDULER", message)
+    return {}
+  }
 }

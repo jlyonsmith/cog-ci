@@ -1,5 +1,6 @@
 import autobind from "autobind-decorator"
 import { timingSafeEqual } from "crypto"
+import config from "config"
 
 @autobind
 export class SlackHandlers {
@@ -9,6 +10,7 @@ export class SlackHandlers {
     this.slack = container.slack
     this.rtm = container.rtm
     this.web = container.web
+    this.mq = container.mq
 
     this.rtm.on("connected", this.onConnected)
     this.rtm.on("disconnected", () => {
@@ -107,6 +109,7 @@ export class SlackHandlers {
     }
 
     const sendingUserName = this.userIdToUserMap.get(sendingUserId)
+    console.log("##", sendingUserName)
 
     if (!sendingUserName) {
       this.log.warning(
@@ -142,7 +145,9 @@ export class SlackHandlers {
           console.log("****** USER HAS TRIGGERED A BUILD")
           this.web.chat.postMessage({
             channel: this.botChannelId,
-            text: "Build request made",
+            text: `:building_construction: Build request made by ${
+              sendingUserName.profile.display_name
+            }`,
             as_user: true,
           })
         },
@@ -153,7 +158,9 @@ export class SlackHandlers {
           console.log("****** USER HAS REQUESTED A STATUS UPDATE")
           this.web.chat.postMessage({
             channel: this.botChannelId,
-            text: "Status update requested",
+            text: `:shell: Status update requested by ${
+              sendingUserName.profile.display_name
+            }`,
             as_user: true,
           })
         },
@@ -164,7 +171,9 @@ export class SlackHandlers {
           console.log("****** USER HAS REQUESTED A LIST OF BUILDS")
           this.web.chat.postMessage({
             channel: this.botChannelId,
-            text: "List of builds requested",
+            text: `:page_with_curl: List of builds requested by ${
+              sendingUserName.profile.display_name
+            }`,
             as_user: true,
           })
         },
@@ -175,7 +184,9 @@ export class SlackHandlers {
           console.log("****** USER HAS REQUESTED A REPORT")
           this.web.chat.postMessage({
             channel: this.botChannelId,
-            text: "Report requested",
+            text: `:scroll: Report requested by ${
+              sendingUserName.profile.display_name
+            }`,
             as_user: true,
           })
         },
@@ -186,7 +197,9 @@ export class SlackHandlers {
           console.log("****** USER HAS REQUESTED A THE QUEUE")
           this.web.chat.postMessage({
             channel: this.botChannelId,
-            text: "Queue requested",
+            text: `:showmewhatyougot: Queue requested by ${
+              sendingUserName.profile.display_name
+            }`,
             as_user: true,
           })
         },
@@ -197,7 +210,9 @@ export class SlackHandlers {
           console.log("****** USER HAS REQUESTED HELP")
           this.web.chat.postMessage({
             channel: this.botChannelId,
-            text: "Help requested",
+            text: `:sos: Help requested by ${
+              sendingUserName.profile.display_name
+            }`,
             as_user: true,
           })
         },
@@ -208,7 +223,9 @@ export class SlackHandlers {
           console.log("****** USER WANTS TO RELAY TO BITBUCKET")
           this.web.chat.postMessage({
             channel: this.botChannelId,
-            text: "Bitbucket Relay Requested",
+            text: `:zap: Bitbucket Relay Requested by ${
+              sendingUserName.profile.display_name
+            }`,
             as_user: true,
           })
         },
@@ -239,7 +256,8 @@ export class SlackHandlers {
     let hasHandler = false
     for (const handler in handlers) {
       const currentHandler = handlers[handler]
-      if (currentHandler.regexp.test(message.text)) {
+      const cleanText = message.text.replace(`<@${botUserId}>`, "").trim() // if a user addresses/tags @Cog-Ci, we don't want to parse that in our regex handling
+      if (currentHandler.regexp.test(cleanText)) {
         hasHandler = true
         currentHandler.func(message)
         // optional "break" here (or check hasHandler) if we only ever want a single match in the handlers regex
@@ -249,16 +267,29 @@ export class SlackHandlers {
       console.log("****** USER HAS SUBMITTED AN UN-HANDLEABLE MESSAGE")
       this.web.chat.postMessage({
         channel: this.botChannelId,
-        text: "NOTE: Command not recognized by COG. Do better.",
-        // icon_emoji: ":fr:",
+        text: `:poopfire: Command not recognized by COG. Do better, ${
+          sendingUserName.profile.display_name
+        }.`,
         as_user: true,
       })
+    } else {
+      this.log.info("It's not a hamster!")
+      this.mq.request(
+        config.serviceName.schedule,
+        "slackMessageReceived",
+        message
+      )
     }
-
-    this.log.info("It's not a hamster!")
   }
 
   async notifyChannel(request) {
+    this.web.chate.postMessage({
+      channel: request.channel || this.botChannelId,
+      as_user: true,
+      message:
+        request.message ||
+        ":dumpster_fire: Channel notification requested without specifying content.",
+    })
     return {}
   }
 }
