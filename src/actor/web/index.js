@@ -26,20 +26,21 @@ class WebActor {
       const mq = new MQ(serviceName, container)
       container.mq = mq
 
+      container.slackmq = new MQ(config.serviceName.slack, container)
+
       const uri = await config.get("uri")
 
       await Promise.all([
-        db.connect(
-          uri.mongo,
-          isProduction
-        ),
+        db.connect(uri.mongo, isProduction),
         mq.connect(uri.amqp),
+        container.slackmq.connect(uri.amqp),
       ])
 
       log.info(`Connected to MongoDB at ${uri.mongo}`)
       log.info(`Connected to RabbitMQ at ${uri.amqp}`)
 
       container.logRoutes = new Routes.LogRoutes(container)
+      container.webhookRoutes = new Routes.WebhookRoutes(container)
 
       app.use(function(req, res, next) {
         res.status(404).json({
