@@ -8,6 +8,7 @@ export class GitHandlers {
   }
 
   async dummy(request) {
+    console.log("I RECEIVED A MESSAGE", request)
     return {}
   }
 }
