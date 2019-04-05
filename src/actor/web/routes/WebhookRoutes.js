@@ -11,38 +11,38 @@ export class WebhookRoutes {
     this.log = container.log
     this.slackmq = container.slackmq
 
-    app.use(bodyParser.json()).post("/", catchAll(this.getWebhook))
+    app
+      .use(bodyParser.json())
+      .post("/bitbucket_hooks", catchAll(this.getWebhook))
   }
 
   async getWebhook(req, res, next) {
     const BBCloudEvent = req.headers["x-event-key"]
     const BBCloudRequest = req.body
     res.json({ success: true })
-    let username = BBCloudRequest.actor.username
-    let repo = BBCloudRequest.repository.full_name
+    const username = BBCloudRequest.actor.username
+    const repo = BBCloudRequest.repository.full_name
+    const link = BBCloudRequest.pullrequest.links.html.href
+    const author = BBCloudRequest.pullrequest.author.display_name
     switch (BBCloudEvent) {
       case "pullrequest:created":
         this.slackmq.request(config.serviceName.slack, "notifyChannel", {
-          message: `${username} has created a Pull Request for the ${repo} repository. Link: ${
-            BBCloudRequest.pullrequest.links.html.href
-          }`,
+          message: `${username} has created a Pull Request for the ${repo} repository. Link: ${link}`,
         })
         break
       case "pullrequest:updated":
         this.slackmq.request(config.serviceName.slack, "notifyChannel", {
-          message: `${username} has updated a Pull Request to the ${repo} repository. Link: ${
-            BBCloudRequest.pullrequest.links.html.href
-          }`,
+          message: `${username} has updated a Pull Request to the ${repo} repository. Link: ${link}`,
         })
         break
       case "pullrequest:approved":
         this.slackmq.request(config.serviceName.slack, "notifyChannel", {
-          message: `${username} has approved the Pull Request for the ${repo} repository.`,
+          message: `${username} has approved the Pull Request for the ${repo} repository. Link: ${link}`,
         })
         break
       case "pullrequest:rejected":
         this.slackmq.request(config.serviceName.slack, "notifyChannel", {
-          message: `${username} has declined a Pull Request to the ${repo} repository.`,
+          message: `${username} has declined a Pull Request to the ${repo} repository. Great shame is heaped upon ${author}. Link: ${link}`,
         })
         break
       case "pullrequest:fulfilled":
