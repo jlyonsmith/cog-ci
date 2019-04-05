@@ -32,13 +32,13 @@ class BitActor {
 
       //Create a Pull Request
 
-      await bb.repositories
-        .createPullRequest({
-          repo_slug: config.bit.repo,
-          username: config.bit.username,
-          _body: { title: "My New PR", source: { branch: { name: "beta" } } },
-        })
-        .then(({ data, headers }) => console.log(data))
+      // await bb.repositories
+      //   .createPullRequest({
+      //     repo_slug: config.bit.repo,
+      //     username: config.bit.username,
+      //     _body: { title: "My New PR", source: { branch: { name: "beta" } } },
+      //   })
+      //   .then(({ data, headers }) => console.log(data))
 
       const ms = new MS(serviceName, { durable: false }, container)
       const uri = await config.get("uri")
