@@ -7,8 +7,8 @@ export const counterSchema = new Schema({
 
 counterSchema.methods.getNextIntegrationSequence = function() {
   this.findAndModify({
-    query: { _id: "integrationSeq" },
-    update: { $inc: { seq: 1 } },
+    query: { _id: "buildIdSeq" },
+    update: { $inc: { buildId: 1 } },
     new: true,
   })
 }

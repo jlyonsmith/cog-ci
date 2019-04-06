@@ -1,9 +1,9 @@
 import { Schema } from "mongoose"
 
-export let integrationSchema = new Schema(
+export let buildRequestSchema = new Schema(
   {
     _id: { type: Schema.Types.ObjectId, required: true, auto: true },
-    seq: Number,
+    build_id: Number,
     purpose: {
       type: String,
       enum: ["master", "release", "pullRequest", "deploy"],
@@ -13,8 +13,12 @@ export let integrationSchema = new Schema(
     pullRequest: String,
     pullRequestTitle: String,
     repoSHA: String,
-    terminationType: { type: String, enum: ["killed", "exited"] },
+    status: {
+      type: String,
+      enum: ["queued", "running", "killed", "fail", "success"],
+    },
     exitCode: Number,
+    requestUser: String,
     startedBy: Schema.Types.ObjectId,
     stoppedBy: Schema.Types.ObjectId,
     startTime: Date,
@@ -25,8 +29,8 @@ export let integrationSchema = new Schema(
   { timestamps: true, id: false }
 )
 
-integrationSchema.index(
-  { num: 1 },
+buildRequestSchema.index(
+  { build_id: 1 },
   {
     unique: true,
   }

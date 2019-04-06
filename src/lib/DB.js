@@ -19,9 +19,9 @@ export class DB {
       useCreateIndex: true,
     })
 
-    this.Integration = this.connection.model(
-      "Integration",
-      Schemas.integrationSchema
+    this.BuildRequest = this.connection.model(
+      "buildRequest",
+      Schemas.buildRequestSchema
     )
     this.Counter = this.connection.model("Counter", Schemas.counterSchema)
     return this
