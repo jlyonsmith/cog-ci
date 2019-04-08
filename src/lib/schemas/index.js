@@ -1,2 +1,2 @@
 export { counterSchema } from "./counter"
-export { integrationSchema } from "./integration"
+export { buildRequestSchema } from "./buildRequest"
