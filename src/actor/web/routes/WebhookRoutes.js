@@ -9,7 +9,7 @@ export class WebhookRoutes {
     const app = container.app
 
     this.log = container.log
-    this.slackmq = container.slackmq
+    this.slackMQ = container.slackMQ
 
     app
       .use(bodyParser.json())
@@ -26,42 +26,42 @@ export class WebhookRoutes {
     const author = BBCloudRequest.pullrequest.author.display_name
     switch (BBCloudEvent) {
       case "pullrequest:created":
-        this.slackmq.request(config.serviceName.slack, "notifyChannel", {
+        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
           message: `${username} has created a Pull Request for the ${repo} repository. Link: ${link}`,
         })
         break
       case "pullrequest:updated":
-        this.slackmq.request(config.serviceName.slack, "notifyChannel", {
+        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
           message: `${username} has updated a Pull Request to the ${repo} repository. Link: ${link}`,
         })
         break
       case "pullrequest:approved":
-        this.slackmq.request(config.serviceName.slack, "notifyChannel", {
-          message: `${username} has approved the Pull Request for the ${repo} repository. Link: ${link}`,
+        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
+          message: `:clap: The Pull Request to the ${repo} repository has been approved by ${username} :clap:. Link: ${link}`,
         })
         break
       case "pullrequest:rejected":
-        this.slackmq.request(config.serviceName.slack, "notifyChannel", {
+        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
           message: `${username} has declined a Pull Request to the ${repo} repository. Great shame is heaped upon ${author}. Link: ${link}`,
         })
         break
       case "pullrequest:fulfilled":
-        this.slackmq.request(config.serviceName.slack, "notifyChannel", {
+        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
           message: `The Pull Request has been fulfilled for the ${repo} repository.`,
         })
         break
       case "pullrequest:comment_created":
-        this.slackmq.request(config.serviceName.slack, "notifyChannel", {
+        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
           message: `${username} has commented to the Pull Request for the ${repo} repository.`,
         })
         break
       case "pullrequest:comment_updated":
-        this.slackmq.request(config.serviceName.slack, "notifyChannel", {
+        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
           message: `${username} has updated a comment to the Pull Request for the ${repo} repository.`,
         })
         break
       case "pullrequest:comment_deleted":
-        this.slackmq.request(config.serviceName.slack, "notifyChannel", {
+        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
           message: `${username} has deleted a comment to the Pull Request for the ${repo} repository. Why? What is ${
             BBCloudRequest.actor.display_name
           } hiding?`,
