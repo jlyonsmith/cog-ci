@@ -237,7 +237,7 @@ export class SlackHandlers {
           this.bitMQ.request(
             config.serviceName.bit,
             "createPullRequest",
-            slackResponse.text
+            slackResponse
           )
         },
       },

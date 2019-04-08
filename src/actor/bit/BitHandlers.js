@@ -21,7 +21,8 @@ export class BitHandlers {
 
   //Create a Pull Request
   async createPullRequest(info) {
-    const cleanText = info.replace(`<@UHFPXK1PS>`, "").trim()
+    const botUser = info.user
+    const cleanText = info.text.replace(`<@${botUser}>`, "").trim()
     const regexp = /^.*?\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\b.*?\s+\btitle:\s+(.*)\b.*?\s+\bbranch:\s+(.*)\b.*?/m
     const regArr = regexp.exec(cleanText)
     const regObj = {
