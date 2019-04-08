@@ -1,0 +1,234 @@
+{
+  "pullrequest": {
+    "rendered": {
+      "description": {
+        "raw": "",
+        "markup": "markdown",
+        "html": "",
+        "type": "rendered"
+      },
+      "title": {
+        "raw": "My PR",
+        "markup": "markdown",
+        "html": "<p>My PR</p>",
+        "type": "rendered"
+      }
+    },
+    "type": "pullrequest",
+    "description": "",
+    "links": {
+      "decline": {
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/decline"
+      },
+      "commits": {
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/commits"
+      },
+      "self": {
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2"
+      },
+      "comments": {
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/comments"
+      },
+      "merge": {
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/merge"
+      },
+      "html": {
+        "href": "https://bitbucket.org/bwmanderino/cogtest/pull-requests/2"
+      },
+      "activity": {
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/activity"
+      },
+      "diff": {
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/diff"
+      },
+      "approve": {
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/approve"
+      },
+      "statuses": {
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/statuses"
+      }
+    },
+    "title": "My PR",
+    "close_source_branch": false,
+    "reviewers": [],
+    "id": 2,
+    "destination": {
+      "commit": {
+        "hash": "91e1bc138996",
+        "type": "commit",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/commit/91e1bc138996"
+          },
+          "html": {
+            "href": "https://bitbucket.org/bwmanderino/cogtest/commits/91e1bc138996"
+          }
+        }
+      },
+      "repository": {
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest"
+          },
+          "html": {
+            "href": "https://bitbucket.org/bwmanderino/cogtest"
+          },
+          "avatar": {
+            "href": "https://bytebucket.org/ravatar/%7Bc371a35b-be93-4c35-91be-49635192e98b%7D?ts=default"
+          }
+        },
+        "type": "repository",
+        "name": "cogtest",
+        "full_name": "bwmanderino/cogtest",
+        "uuid": "{c371a35b-be93-4c35-91be-49635192e98b}"
+      },
+      "branch": {
+        "name": "master"
+      }
+    },
+    "created_on": "2019-04-04T17:42:52.602501+00:00",
+    "summary": {
+      "raw": "",
+      "markup": "markdown",
+      "html": "",
+      "type": "rendered"
+    },
+    "source": {
+      "commit": {
+        "hash": "4060d04a2e5a",
+        "type": "commit",
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/commit/4060d04a2e5a"
+          },
+          "html": {
+            "href": "https://bitbucket.org/bwmanderino/cogtest/commits/4060d04a2e5a"
+          }
+        }
+      },
+      "repository": {
+        "links": {
+          "self": {
+            "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest"
+          },
+          "html": {
+            "href": "https://bitbucket.org/bwmanderino/cogtest"
+          },
+          "avatar": {
+            "href": "https://bytebucket.org/ravatar/%7Bc371a35b-be93-4c35-91be-49635192e98b%7D?ts=default"
+          }
+        },
+        "type": "repository",
+        "name": "cogtest",
+        "full_name": "bwmanderino/cogtest",
+        "uuid": "{c371a35b-be93-4c35-91be-49635192e98b}"
+      },
+      "branch": {
+        "name": "beta"
+      }
+    },
+    "comment_count": 0,
+    "state": "DECLINED",
+    "task_count": 0,
+    "participants": [],
+    "reason": "",
+    "updated_on": "2019-04-04T19:11:34.696263+00:00",
+    "author": {
+      "username": "bwmanderino",
+      "display_name": "Brian Manderino",
+      "uuid": "{b8866e9f-b33a-4393-8332-c530aa0e6980}",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/users/bwmanderino"
+        },
+        "html": {
+          "href": "https://bitbucket.org/bwmanderino/"
+        },
+        "avatar": {
+          "href": "https://bitbucket.org/account/bwmanderino/avatar/"
+        }
+      },
+      "nickname": "bwmanderino",
+      "type": "user",
+      "account_id": "5be9dacf74b7ce17998bfd77"
+    },
+    "merge_commit": null,
+    "closed_by": {
+      "username": "bwmanderino",
+      "display_name": "Brian Manderino",
+      "uuid": "{b8866e9f-b33a-4393-8332-c530aa0e6980}",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/users/bwmanderino"
+        },
+        "html": {
+          "href": "https://bitbucket.org/bwmanderino/"
+        },
+        "avatar": {
+          "href": "https://bitbucket.org/account/bwmanderino/avatar/"
+        }
+      },
+      "nickname": "bwmanderino",
+      "type": "user",
+      "account_id": "5be9dacf74b7ce17998bfd77"
+    }
+  },
+  "repository": {
+    "scm": "git",
+    "website": "",
+    "name": "cogtest",
+    "links": {
+      "self": {
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest"
+      },
+      "html": {
+        "href": "https://bitbucket.org/bwmanderino/cogtest"
+      },
+      "avatar": {
+        "href": "https://bytebucket.org/ravatar/%7Bc371a35b-be93-4c35-91be-49635192e98b%7D?ts=default"
+      }
+    },
+    "full_name": "bwmanderino/cogtest",
+    "owner": {
+      "username": "bwmanderino",
+      "display_name": "Brian Manderino",
+      "uuid": "{b8866e9f-b33a-4393-8332-c530aa0e6980}",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/users/bwmanderino"
+        },
+        "html": {
+          "href": "https://bitbucket.org/bwmanderino/"
+        },
+        "avatar": {
+          "href": "https://bitbucket.org/account/bwmanderino/avatar/"
+        }
+      },
+      "nickname": "bwmanderino",
+      "type": "user",
+      "account_id": "5be9dacf74b7ce17998bfd77"
+    },
+    "type": "repository",
+    "is_private": true,
+    "uuid": "{c371a35b-be93-4c35-91be-49635192e98b}"
+  },
+  "actor": {
+    "username": "bwmanderino",
+    "display_name": "Brian Manderino",
+    "uuid": "{b8866e9f-b33a-4393-8332-c530aa0e6980}",
+    "links": {
+      "self": {
+        "href": "https://api.bitbucket.org/2.0/users/bwmanderino"
+      },
+      "html": {
+        "href": "https://bitbucket.org/bwmanderino/"
+      },
+      "avatar": {
+        "href": "https://bitbucket.org/account/bwmanderino/avatar/"
+      }
+    },
+    "nickname": "bwmanderino",
+    "type": "user",
+    "account_id": "5be9dacf74b7ce17998bfd77"
+  }
+}
