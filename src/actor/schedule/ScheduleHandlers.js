@@ -5,20 +5,31 @@ export class ScheduleHandlers {
   constructor(container) {
     this.db = container.db
     this.log = container.log
+    this.buildIdSeqKey = "buildIdSeq"
+    this.runDaemon = true // on by default
+    this.daemonStatus = "stopped"
   }
 
+  async init() {
+    this._startDaemon()
+  }
+
+  // Public Methods ==================================
   /**
    * Add a new buid to the queue
    * @param {*} buildData
    */
   async queueBuild(buildData) {
     this.log.info(`Queue Build`)
-    return {
-      buildId: 99,
-      status: "queued",
-      queueStatus: "running",
-      queueLength: 5,
-      buildData,
+    const newBuildId = await this._getNextBuildId()
+    buildData.buildId = newBuildId
+    buildData.status = "queued"
+    const BuildRequest = this.db.BuildRequest
+    try {
+      const newBuildRequest = await BuildRequest.create(buildData)
+      return { success: true, message: "success", data: newBuildRequest }
+    } catch (ex) {
+      return { success: false, message: ex.message }
     }
   }
 
@@ -36,6 +47,7 @@ export class ScheduleHandlers {
    */
   async pauseBuildQueue() {
     return { status: "paused", length: 5 }
+    this.runDaemon = false
   }
 
   /**
@@ -43,11 +55,12 @@ export class ScheduleHandlers {
    */
   async startBuildQueue() {
     return { status: "running", length: 5 }
+    this.runDaemon = true
   }
 
   async getCurrentBuild() {
     return {
-      build_id: 205,
+      buildId: 205,
       status: "building",
       data: { user: "me", type: "pullRequest", repository: "it" },
     }
@@ -65,7 +78,7 @@ export class ScheduleHandlers {
    * @param {*} offset
    * @param {*} limit
    */
-  async listBuildQueue(type = "*", status = "*", offset, limit) {
+  async listBuildQueue(purpose = "*", status = "*", offset, limit) {
     return { offset: offset, total: 0, builds: [] }
   }
 
@@ -79,4 +92,23 @@ export class ScheduleHandlers {
     console.log("**************** MESSEGE RECEIVED BY SCHEDULER", message)
     return {}
   }
+
+  // Internal Methods =====================================================
+  async _getNextBuildId() {
+    const Counter = this.db.Counter
+    this.log.info(`getNextBuild find and update key:${this.buildIdSeqKey}`)
+    let seqOut = await Counter.findOneAndUpdate(
+      { _id: this.buildIdSeqKey },
+      { $inc: { seq: 1 } },
+      { new: true }
+    )
+    this.log.info(` seqOut: ${seqOut}`)
+    if (seqOut == null) {
+      let newSeq = new Counter({ _id: this.buildIdSeqKey, seq: 1 })
+      seqOut = await newSeq.save()
+    }
+    return seqOut.seq
+  }
+
+  async _startDaemon() {}
 }

@@ -20,10 +20,7 @@ class ScheduleActor {
       const uri = await config.get("uri")
 
       await Promise.all([
-        db.connect(
-          uri.mongo,
-          isProduction
-        ),
+        db.connect(uri.mongo, isProduction),
         ms.connect(uri.amqp),
       ])
 
@@ -31,6 +28,7 @@ class ScheduleActor {
       log.info(`Connected to RabbitMQ at ${uri.amqp}`)
 
       container.handlers = new ScheduleHandlers(container)
+      container.handlers.init()
 
       await ms.listen(container.handlers)
     } catch (error) {
