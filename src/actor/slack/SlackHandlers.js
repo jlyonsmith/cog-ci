@@ -165,6 +165,30 @@ export class SlackHandlers {
           })
         },
       },
+      // {
+      //   regexp: /^(pull-request|pr)/,
+      //   func: (slackResponse) => {
+      //     console.log("****** USER HAS INITIATED A PULL REQUEST")
+      //     const params = ["repo", "username", "title", "branch"]
+      //     let errors = []
+      //     for(let param in params) {
+      //       const currentParam = params[param]
+      //       if(slackResponse.indexOf(currentParam) === -1) {
+      //         hasError = true
+      //         break
+      //       } else {
+
+      //       }
+      //     }
+      //     this.web.chat.postMessage({
+      //       channel: this.botChannelId,
+      //       text: `:shell: Status update requested by ${
+      //         sendingUserName.profile.display_name
+      //         }`,
+      //       as_user: true,
+      //     })
+      //   },
+      // },
       {
         regexp: /^show +(?:last +([0-9]+) +)?builds/,
         func: (slackResponse) => {
@@ -287,7 +311,7 @@ export class SlackHandlers {
       channel: request.channel || this.botChannelId,
       as_user: true,
       text:
-        request.message ||
+        `:airhorn: ${request.message}` ||
         ":dumpster_fire: Channel notification requested without specifying content.",
     })
     return {}
