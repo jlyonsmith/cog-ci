@@ -11,6 +11,7 @@ export class SlackHandlers {
     this.rtm = container.rtm
     this.web = container.web
     this.mq = container.mq
+    this.bitMQ = container.bitMQ
 
     this.rtm.on("connected", this.onConnected)
     this.rtm.on("disconnected", () => {
@@ -263,6 +264,38 @@ export class SlackHandlers {
           this.postMessage(payload)
         },
       },
+      {
+        regexp: /^.*?\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\b.*?\s+\btitle:\s+(.*)\b.*?\s+\bbranch:\s+(.*)\b.*?/m,
+        func: (slackResponse) => {
+          this.bitMQ.request(
+            config.serviceName.bit,
+            "createPullRequest",
+            slackResponse
+          )
+        },
+      },
+
+      // when /build +([a-z0-9, \.]+)/i
+      //   do_build $1, is_from_slack_channel, slack_user_name
+      // when /(?:show +)?status/
+      //   do_show_status
+      // when /show +(?:last +([0-9]+) +)?builds/
+      //   limit = $1.to_i unless $1.nil?
+      //   if limit.nil? or limit < 5
+      //     limit = 5
+      //   end
+      //   do_show_builds limit
+      // when /show report/
+      //   do_show_report
+      // when /show queue/
+      //   do_show_queue
+      // when /help/i
+      //   do_show_help is_from_slack_channel, slack_user_name
+      // when /^relay(.*)/i # This must be sent directly to build-buddy
+      //   do_relay $1, slack_user_name
+      // else
+      //   "Sorry#{is_from_slack_channel ? ' ' + slack_user_name : ''}, I'm not sure how to respond."
+      //              end
     ]
     let hasHandler = false
     for (const handler in handlers) {

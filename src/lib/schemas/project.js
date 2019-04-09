@@ -9,10 +9,3 @@ export let projectSchema = new Schema(
   },
   { timestamps: true, id: false }
 )
-
-integrationSchema.index(
-  { num: 1 },
-  {
-    unique: true,
-  }
-)
