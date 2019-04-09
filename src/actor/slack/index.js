@@ -10,7 +10,6 @@ class SlackActor {
     let log = getLog(serviceNames.slack)
     let container = { log }
     const uri = await config.get("uri")
-
     container.ms = new MS(serviceNames.slack, { durable: false }, container)
     container.db = new DB(container)
     container.slack = config.get("slack")
