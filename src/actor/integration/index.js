@@ -10,20 +10,13 @@ class IntegrationActor {
 
     try {
       const ms = new MS(serviceName, { durable: false }, container)
-
       container.ms = ms
-
       const db = new DB(container)
-
       container.db = db
-
       const uri = await config.get("uri")
 
       await Promise.all([
-        db.connect(
-          uri.mongo,
-          isProduction
-        ),
+        db.connect(uri.mongo, isProduction),
         ms.connect(uri.amqp),
       ])
 

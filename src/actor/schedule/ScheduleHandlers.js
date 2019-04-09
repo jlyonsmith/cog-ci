@@ -83,9 +83,15 @@ export class ScheduleHandlers {
         .limit(1)
         .sort(sortSpec)
       const result = await query.exec()
-      return { success: true, message: "", data: result[0] }
+      this.log.info(`next build ${JSON.stringify(result)}`)
+      return {
+        success: true,
+        message: "",
+        found: result.length,
+        data: result[0],
+      }
     } catch (ex) {
-      return { success: false, message: ex.message, data: null }
+      return { success: false, message: ex.message, found: 0, data: null }
     }
   }
 
@@ -123,6 +129,7 @@ export class ScheduleHandlers {
       find["status"] = { $eq: status }
     }
     const BuildRequest = this.db.BuildRequest
+    const total = await BuildRequest.countDocuments(find)
     // this.log.info(`listBuildQueue find:
     // purpose:${purpose}  status:${status} find: ${JSON.stringify(
     //   find,
@@ -134,8 +141,8 @@ export class ScheduleHandlers {
         .skip(offset)
         .limit(limit)
         .sort({ buildId: 1 })
-      const result = await query.exec()
-      return { success: true, message: "success", data: result }
+      const data = await query.exec()
+      return { success: true, message: "success", offset, total, data }
     } catch (ex) {
       return { success: false, message: ex.message }
     }
@@ -205,5 +212,13 @@ export class ScheduleHandlers {
   async _onDaemonTimer(origin) {
     const now = new Date()
     this.log.info(`onDaemonTimer ${now.toISOString()}`)
+    // Get current running build
+    // if found,
+    //  check runtime and
+    //    terminate if running too long
+    // else
+    //  find next build
+    //    and call Build Actor with buildData
+    //       on confirmation of start, update record with start time.
   }
 }
