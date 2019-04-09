@@ -1,5 +1,5 @@
 import autobind from "autobind-decorator"
-import { timingSafeEqual } from "crypto"
+// import { timingSafeEqual } from "crypto"
 import config from "config"
 
 @autobind
@@ -25,7 +25,6 @@ export class SlackHandlers {
   async onConnected() {
     const botUserId = this.rtm.activeUserId
     const usersListResponse = await this.web.users.list()
-
     this.userIdToUserMap = usersListResponse.members.reduce((map, user) => {
       map.set(user.id, user)
       return map
@@ -82,6 +81,17 @@ export class SlackHandlers {
     )
   }
 
+  postMessage = (payload) => {
+    let { channel, as_user } = payload
+    channel = channel || this.botChannelId
+    as_user = as_user === false ? as_user : true
+    this.web.chat.postMessage({
+      ...payload,
+      channel,
+      as_user,
+    })
+  }
+
   async onMessage(message) {
     const isUserMessage = message.subtype === undefined
     const isBotMessage = message.subtype && message.subtype !== "bot_message"
@@ -109,7 +119,6 @@ export class SlackHandlers {
     }
 
     const sendingUserName = this.userIdToUserMap.get(sendingUserId)
-    console.log("##", sendingUserName)
 
     if (!sendingUserName) {
       this.log.warning(
@@ -126,6 +135,8 @@ export class SlackHandlers {
       return
     }
 
+    const userString = `<@${message.user}>`
+
     // test-bot channel id :: GHLMQCMPH
     const handlers = [
       {
@@ -136,146 +147,122 @@ export class SlackHandlers {
       {
         regexp: /^test/i,
         func: (slackResponse) => {
-          console.log("USER HAS TRIGGERED A TEST", slackResponse)
+          console.log("****** USER HAS TRIGGERED A TEST", slackResponse)
+          const payload = {
+            text: `:ghostbusters: Test triggered by ${userString}`,
+          }
+          this.postMessage(payload)
         },
       },
       {
         regexp: /^build+([a-z0-9, \.]+)/i,
         func: (slackResponse) => {
           console.log("****** USER HAS TRIGGERED A BUILD")
-          this.web.chat.postMessage({
-            channel: this.botChannelId,
-            text: `:building_construction: Build request made by ${
-              sendingUserName.profile.display_name
-            }`,
-            as_user: true,
-          })
+          const payload = {
+            text: `:building_construction: Build request made by ${userString}`,
+          }
+          this.postMessage(payload)
         },
       },
       {
         regexp: /^(?:show +)?status/,
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED A STATUS UPDATE")
-          this.web.chat.postMessage({
-            channel: this.botChannelId,
-            text: `:shell: Status update requested by ${
-              sendingUserName.profile.display_name
-            }`,
-            as_user: true,
-          })
+          const payload = {
+            text: `:shell: Status update requested by ${userString}`,
+          }
+          this.postMessage(payload)
         },
       },
-      // {
-      //   regexp: /^(pull-request|pr)/,
-      //   func: (slackResponse) => {
-      //     console.log("****** USER HAS INITIATED A PULL REQUEST")
-      //     const params = ["repo", "username", "title", "branch"]
-      //     let errors = []
-      //     for(let param in params) {
-      //       const currentParam = params[param]
-      //       if(slackResponse.indexOf(currentParam) === -1) {
-      //         hasError = true
-      //         break
-      //       } else {
+      {
+        regexp: /^(pull-request|pr)/,
+        func: (slackResponse) => {
+          console.log("****** USER HAS INITIATED A PULL REQUEST")
+          const params = ["repo", "username", "title", "branch"]
+          let errors = []
+          for (let param in params) {
+            const currentParam = params[param]
+            if (slackResponse.text.indexOf(currentParam) === -1) {
+              errors.push(currentParam)
+            }
+          }
+          if (errors.length > 0) {
+            // message user about errors / missing keys
 
-      //       }
-      //     }
-      //     this.web.chat.postMessage({
-      //       channel: this.botChannelId,
-      //       text: `:shell: Status update requested by ${
-      //         sendingUserName.profile.display_name
-      //         }`,
-      //       as_user: true,
-      //     })
-      //   },
-      // },
+            let messageResponse = `The following ${
+              errors.length === 1 ? "key is" : "keys are"
+            } missing from the request: `
+            for (const error in errors) {
+              messageResponse += `\`${errors[error]}\` `
+            }
+            this.postMessage({
+              text: messageResponse,
+              channel: message.channel,
+              thread_ts: message.ts,
+              // as_user: false,
+              // icon_emoji: ":x:",
+            })
+          } else {
+            // TODO: call to schedule actor to create build
+            // wait on reply
+            // notify channel of build status
+            const payload = {
+              text: `:shell: Pull Request made by ${userString}`,
+            }
+            this.postMessage(payload)
+          }
+        },
+      },
       {
         regexp: /^show +(?:last +([0-9]+) +)?builds/,
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED A LIST OF BUILDS")
-          this.web.chat.postMessage({
-            channel: this.botChannelId,
-            text: `:page_with_curl: List of builds requested by ${
-              sendingUserName.profile.display_name
-            }`,
-            as_user: true,
-          })
+          const payload = {
+            text: `:page_with_curl: List of builds requested by ${userString}`,
+          }
+          this.postMessage(payload)
         },
       },
       {
         regexp: /^show report/,
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED A REPORT")
-          this.web.chat.postMessage({
-            channel: this.botChannelId,
-            text: `:scroll: Report requested by ${
-              sendingUserName.profile.display_name
-            }`,
-            as_user: true,
-          })
+          const payload = {
+            text: `:scroll: Report requested by ${userString}`,
+          }
+          this.postMessage(payload)
         },
       },
       {
         regexp: /^show queue/,
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED A THE QUEUE")
-          this.web.chat.postMessage({
-            channel: this.botChannelId,
-            text: `:showmewhatyougot: Queue requested by ${
-              sendingUserName.profile.display_name
-            }`,
-            as_user: true,
-          })
+          const payload = {
+            text: `:showmewhatyougot: Queue requested by ${userString}`,
+          }
+          this.postMessage(payload)
         },
       },
       {
         regexp: /^help/i,
         func: (slackResponse) => {
           console.log("****** USER HAS REQUESTED HELP")
-          this.web.chat.postMessage({
-            channel: this.botChannelId,
-            text: `:sos: Help requested by ${
-              sendingUserName.profile.display_name
-            }`,
-            as_user: true,
-          })
+          const payload = {
+            text: `:sos: Help requested by ${userString}`,
+          }
+          this.postMessage(payload)
         },
       },
       {
         regexp: /^relay(.*)/i,
         func: (slackResponse) => {
           console.log("****** USER WANTS TO RELAY TO BITBUCKET")
-          this.web.chat.postMessage({
-            channel: this.botChannelId,
-            text: `:zap: Bitbucket Relay Requested by ${
-              sendingUserName.profile.display_name
-            }`,
-            as_user: true,
-          })
+          const payload = {
+            text: `:zap: Bitbucket Relay Requested by ${userString}`,
+          }
+          this.postMessage(payload)
         },
       },
-
-      // when /build +([a-z0-9, \.]+)/i
-      //   do_build $1, is_from_slack_channel, slack_user_name
-      // when /(?:show +)?status/
-      //   do_show_status
-      // when /show +(?:last +([0-9]+) +)?builds/
-      //   limit = $1.to_i unless $1.nil?
-      //   if limit.nil? or limit < 5
-      //     limit = 5
-      //   end
-      //   do_show_builds limit
-      // when /show report/
-      //   do_show_report
-      // when /show queue/
-      //   do_show_queue
-      // when /help/i
-      //   do_show_help is_from_slack_channel, slack_user_name
-      // when /^relay(.*)/i # This must be sent directly to build-buddy
-      //   do_relay $1, slack_user_name
-      // else
-      //   "Sorry#{is_from_slack_channel ? ' ' + slack_user_name : ''}, I'm not sure how to respond."
-      //              end
     ]
     let hasHandler = false
     for (const handler in handlers) {
@@ -287,16 +274,25 @@ export class SlackHandlers {
         // optional "break" here (or check hasHandler) if we only ever want a single match in the handlers regex
       }
     }
+
+    // respond if message is unhandled
     if (!hasHandler) {
-      console.log("****** USER HAS SUBMITTED AN UN-HANDLEABLE MESSAGE")
-      this.web.chat.postMessage({
-        channel: this.botChannelId,
-        text: `:poopfire: Command not recognized by COG. Do better, ${
-          sendingUserName.profile.display_name
-        }.`,
-        as_user: true,
-      })
+      const commandWord =
+        message.text?.split(" ")[0] === `<@${botUserId}>`
+          ? message.text?.split(" ")[1]
+          : message.text?.split(" ")[0]
+      const payload = {
+        channel: message.channel,
+        text: `:poopfire: Command \`${commandWord}\` not recognized by COG. Do better, <@${
+          message.user
+        }>.`,
+        thread_ts: message.ts,
+        // replay_broadcast: true,
+      }
+      console.log("****** USER HAS SUBMITTED AN UN-HANDLEABLE MESSAGE", message)
+      this.postMessage(payload)
     } else {
+      // message was successfully handled
       this.log.info("It's not a hamster!")
       this.mq.request(
         config.serviceName.schedule,
@@ -307,13 +303,13 @@ export class SlackHandlers {
   }
 
   async notifyChannel(request) {
-    this.web.chat.postMessage({
+    const payload = {
       channel: request.channel || this.botChannelId,
-      as_user: true,
       text:
         `:airhorn: ${request.message}` ||
         ":dumpster_fire: Channel notification requested without specifying content.",
-    })
+    }
+    this.postMessage(payload)
     return {}
   }
 }
