@@ -1,5 +1,5 @@
 import autobind from "autobind-decorator"
-import { timingSafeEqual } from "crypto"
+import config from "config"
 
 @autobind
 export class ScheduleHandlers {
@@ -10,9 +10,11 @@ export class ScheduleHandlers {
     this.runDaemon = true // the damon should run whenever there is work to do in the queue.
     this.daemonStatus = "stopped" // status: stopped: turned off;  waiting: on but nothing in the queue so not actually running; running: active, looking for job or monitoring job.
     this.daemonTimer = null
-    this.daemonInterval = 5000 // milliseconds
-    this.buildTimeout = 10 * 60 * 1000 // 10 minutes  // TODO: move to config
+    this.daemonIntervalMilliseconds = 5000 // milliseconds
+    this.buildTimeoutMilliseconds = 10 * 60 * 1000 // 10 minutes  // TODO: move to config
     this.runningBuild = null
+    this.integrationMQ = container.integrationMQ
+    this.integrationExchange = config.get("serviceName.integration")
   }
 
   async init() {
@@ -41,21 +43,26 @@ export class ScheduleHandlers {
 
   /**
    * Stop the running job or remove it from the queue if it has not yet run
+   * This does not stop the daemon. If there are queued jobs, it will then pick up the next.
    * @param {*} buildId
    * @param {*} user
    */
-  async stopBuild(buildId, user) {
+  async stopBuild(request) {
+    const { buildId, status, user } = request
+    this.log.info(`Stopping Build: ${buildId} ... `)
+    // call to
+    await this._updateBuildRequest(buildId, { status, endTime: new Date() })
+
     return { build: buildId, status: "stopped" }
   }
 
   async getBuildDaemonStatus() {
     const queueLengthData = await this.getQueueLength("queued")
-    // this.log.info(`queuelen: ${JSON.stringify(queueLengthData, null, 2)}`)
     const queueLength = queueLengthData.data.count
     const result = {
       daemonStatus: this.daemonStatus,
-      currentBuild: this.currentBuild || "none",
-      daemonInterval: this.daemonInterval,
+      runningBuild: this.runningBuild || "none",
+      daemonInterval: this.daemonIntervalMilliseconds,
       queuedBuilds: queueLength,
     }
     return result
@@ -66,7 +73,7 @@ export class ScheduleHandlers {
    */
   async stopBuildDaemon() {
     this.runDaemon = false
-    this._stopDaemon()
+    await this._stopDaemon()
     return await this.getBuildDaemonStatus()
   }
 
@@ -75,7 +82,7 @@ export class ScheduleHandlers {
    */
   async startBuildDaemon() {
     this.runDaemon = true
-    this._startDaemon()
+    await this._startDaemon()
     return await this.getBuildDaemonStatus()
   }
 
@@ -98,7 +105,7 @@ export class ScheduleHandlers {
         .limit(1)
         .sort(sortSpec)
       const result = await query.exec()
-      this.log.info(`next build ${JSON.stringify(result)}`)
+      // this.log.info(`next build ${JSON.stringify(result)}`)
       return {
         success: true,
         message: "",
@@ -191,6 +198,17 @@ export class ScheduleHandlers {
     return seqOut.seq
   }
 
+  async _updateBuildRequest(buildId, document) {
+    const BuildRequest = this.db.BuildRequest
+    try {
+      const condition = { buildId: { $eq: buildId } }
+      const result = await BuildRequest.updateOne(condition, document)
+      return result.nModified
+    } catch (ex) {
+      return false
+    }
+  }
+
   // Daemon methods and handlers ==========================================
   async _startDaemon() {
     if (this.runDaemon) {
@@ -199,12 +217,14 @@ export class ScheduleHandlers {
         if (this.daemonStatus != "running") {
           this.daemonTimer = setInterval(
             this._onDaemonTimer,
-            this.daemonInterval,
+            this.daemonIntervalMilliseconds,
             this
           )
           this.daemonStatus = "running"
           this.log.info(
-            `Daemon started with interval: ${this.daemonInterval} milliseconds`
+            `Daemon started with interval: ${
+              this.daemonIntervalMilliseconds
+            } milliseconds`
           )
         } else {
           this.log.info("Daemon is already running. Request ignored.")
@@ -230,20 +250,91 @@ export class ScheduleHandlers {
 
   async _stopDaemon() {
     clearInterval(this.daemonTimer)
-    this.log.info("Daemon Stopped")
+    this.log.info("Daemon Halted")
     this.daemonStatus = "stopped"
   }
 
   async _onDaemonTimer(origin) {
-    const now = new Date()
-    this.log.info(`onDaemonTimer ${now.toISOString()}`)
+    const daemonNow = new Date()
+    this.log.info(`onDaemonTimer ${daemonNow.toISOString()}`)
+
     // Get current running build
-    // if found,
-    //  check runtime and
-    //    terminate if running too long
-    // else
-    //  find next build
-    //    and call Build Actor with buildData
-    //       on confirmation of start, update record with start time.
+    const runningBuild = await this.getRunningBuild()
+    if (runningBuild.found > 0) {
+      // if found,
+      //  check runtime and
+      //    terminate if running too long
+
+      this.runningBuild = runningBuild.data.buildId
+      const startTime = runningBuild.data.startTime
+      this.log.info(
+        `Running build found: ${this.runningBuild} started: ${startTime}`
+      )
+
+      if (startTime) {
+        const timeout = startTime.getTime() + this.buildTimeoutMilliseconds
+        this.log.info(
+          `Checking for timeout ${timeout} < ${daemonNow.getTime()}`
+        )
+        if (timeout < daemonNow.getTime()) {
+          // build timed out.
+          this.log.warn(
+            `Build buildId: ${this.runningBuild} timed out. Stopping`
+          )
+          await this.stopBuild({
+            buildId: this.runningBuild,
+            status: "timeout",
+            user: null,
+          })
+        } else {
+          // Check status of build.
+          this.log.info("Check build status....")
+          // >>> TODO: Call Build Actor to check status.
+        }
+      } else {
+        this.log.error(
+          `Build buildId: ${this.runningBuild}, start time not recorded`
+        )
+        await this.stopBuild({
+          buildId: this.runningBuild,
+          status: "killed",
+          user: null,
+        })
+      }
+    } else {
+      this.log.info(`No running build, find next`)
+      const nextBuild = await this.getNextBuild()
+      if (nextBuild.found > 0) {
+        const nextBuildId = nextBuild.data.buildId
+        this.log.info(`startTask request ...`)
+        const integrationReply = await this.integrationMQ.requestAndReply(
+          this.integrationExchange,
+          "startTask",
+          nextBuild.data
+        )
+        this.log.info(
+          `startTask reply: ${JSON.stringify(integrationReply, null, 2)}`
+        )
+        if (integrationReply.success == true) {
+          const updated = await _updateBuildRequest(nextBuildId, {
+            startTime: daemonNow,
+            status: "running",
+          })
+        } else {
+          this.log.warn(
+            `Integration task start failed: ${integrationReply.message}`
+          )
+          const updated = await _updateBuildRequest(nextBuildId, {
+            status: "fail",
+          })
+        }
+      } else {
+        // put the daemon to sleep until something pushed
+        this.log.info(
+          `Queue is empty, pushing pause on daemon until next reqest`
+        )
+        await this._stopDaemon()()
+      }
+    }
   }
 }

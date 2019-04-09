@@ -15,7 +15,7 @@ export let buildRequestSchema = new Schema(
     repoSHA: String,
     status: {
       type: String,
-      enum: ["queued", "running", "killed", "fail", "success"],
+      enum: ["queued", "running", "killed", "timeout", "fail", "success"],
     },
     exitCode: Number,
     requestUser: String,
