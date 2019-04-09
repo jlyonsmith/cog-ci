@@ -8,9 +8,9 @@
         "type": "rendered"
       },
       "title": {
-        "raw": "My PR",
+        "raw": "My New PR",
         "markup": "markdown",
-        "html": "<p>My PR</p>",
+        "html": "<p>My New PR</p>",
         "type": "rendered"
       }
     },
@@ -18,40 +18,40 @@
     "description": "",
     "links": {
       "decline": {
-        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/decline"
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/5/decline"
       },
       "commits": {
-        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/commits"
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/5/commits"
       },
       "self": {
-        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2"
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/5"
       },
       "comments": {
-        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/comments"
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/5/comments"
       },
       "merge": {
-        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/merge"
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/5/merge"
       },
       "html": {
-        "href": "https://bitbucket.org/bwmanderino/cogtest/pull-requests/2"
+        "href": "https://bitbucket.org/bwmanderino/cogtest/pull-requests/5"
       },
       "activity": {
-        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/activity"
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/5/activity"
       },
       "diff": {
-        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/diff"
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/5/diff"
       },
       "approve": {
-        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/approve"
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/5/approve"
       },
       "statuses": {
-        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/2/statuses"
+        "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/pullrequests/5/statuses"
       }
     },
-    "title": "My PR",
+    "title": "My New PR",
     "close_source_branch": false,
     "reviewers": [],
-    "id": 2,
+    "id": 5,
     "destination": {
       "commit": {
         "hash": "91e1bc138996",
@@ -86,7 +86,7 @@
         "name": "master"
       }
     },
-    "created_on": "2019-04-04T17:42:52.602501+00:00",
+    "created_on": "2019-04-05T16:39:40.756447+00:00",
     "summary": {
       "raw": "",
       "markup": "markdown",
@@ -95,14 +95,14 @@
     },
     "source": {
       "commit": {
-        "hash": "4060d04a2e5a",
+        "hash": "1f31ac5354c5",
         "type": "commit",
         "links": {
           "self": {
-            "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/commit/4060d04a2e5a"
+            "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/commit/1f31ac5354c5"
           },
           "html": {
-            "href": "https://bitbucket.org/bwmanderino/cogtest/commits/4060d04a2e5a"
+            "href": "https://bitbucket.org/bwmanderino/cogtest/commits/1f31ac5354c5"
           }
         }
       },
@@ -128,11 +128,11 @@
       }
     },
     "comment_count": 0,
-    "state": "DECLINED",
+    "state": "MERGED",
     "task_count": 0,
     "participants": [],
     "reason": "",
-    "updated_on": "2019-04-04T19:11:34.696263+00:00",
+    "updated_on": "2019-04-05T17:58:22.612214+00:00",
     "author": {
       "username": "bwmanderino",
       "display_name": "Brian Manderino",
@@ -152,7 +152,18 @@
       "type": "user",
       "account_id": "5be9dacf74b7ce17998bfd77"
     },
-    "merge_commit": null,
+    "merge_commit": {
+      "hash": "8092e1792fd1",
+      "type": "commit",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/bwmanderino/cogtest/commit/8092e1792fd1"
+        },
+        "html": {
+          "href": "https://bitbucket.org/bwmanderino/cogtest/commits/8092e1792fd1"
+        }
+      }
+    },
     "closed_by": {
       "username": "bwmanderino",
       "display_name": "Brian Manderino",
