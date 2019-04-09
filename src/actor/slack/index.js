@@ -17,11 +17,13 @@ class SlackActor {
     container.rtm = new RTMClient(container.slack.token)
     container.web = new WebClient(container.slack.token)
     container.mq = new MQ(serviceNames.schedule, container)
+    container.bitMQ = new MQ(serviceNames.bit, container)
 
     await Promise.all([
       container.db.connect(uri.mongo, isProduction),
       container.ms.connect(uri.amqp),
       container.mq.connect(uri.amqp),
+      container.bitMQ.connect(uri.amqp),
     ])
 
     log.info(`Connected to MongoDB at ${uri.mongo}`)

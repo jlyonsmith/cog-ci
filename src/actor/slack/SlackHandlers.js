@@ -11,6 +11,7 @@ export class SlackHandlers {
     this.rtm = container.rtm
     this.web = container.web
     this.mq = container.mq
+    this.bitMQ = container.bitMQ
 
     this.rtm.on("connected", this.onConnected)
     this.rtm.on("disconnected", () => {
@@ -228,6 +229,16 @@ export class SlackHandlers {
             }`,
             as_user: true,
           })
+        },
+      },
+      {
+        regexp: /^.*?\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\b.*?\s+\btitle:\s+(.*)\b.*?\s+\bbranch:\s+(.*)\b.*?/m,
+        func: (slackResponse) => {
+          this.bitMQ.request(
+            config.serviceName.bit,
+            "createPullRequest",
+            slackResponse
+          )
         },
       },
 

@@ -26,7 +26,7 @@ class WebActor {
       const mq = new MQ(serviceName, container)
       container.mq = mq
 
-      container.slackmq = new MQ(config.serviceName.slack, container)
+      container.slackMQ = new MQ(config.serviceName.slack, container)
       container.scheduleMQ = new MQ(config.serviceName.schedule, container)
 
       const uri = await config.get("uri")
@@ -34,7 +34,7 @@ class WebActor {
       await Promise.all([
         db.connect(uri.mongo, isProduction),
         mq.connect(uri.amqp),
-        container.slackmq.connect(uri.amqp),
+        container.slackMQ.connect(uri.amqp),
         container.scheduleMQ.connect(uri.amqp),
       ])
 
