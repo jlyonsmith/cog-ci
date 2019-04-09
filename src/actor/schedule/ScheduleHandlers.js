@@ -1,4 +1,5 @@
 import autobind from "autobind-decorator"
+import { timingSafeEqual } from "crypto"
 
 @autobind
 export class ScheduleHandlers {
@@ -7,10 +8,11 @@ export class ScheduleHandlers {
     this.log = container.log
     this.buildIdSeqKey = "buildIdSeq"
     this.runDaemon = true // the damon should run whenever there is work to do in the queue.
-    this.daemonStatus = "stopped"
+    this.daemonStatus = "stopped" // status: stopped: turned off;  waiting: on but nothing in the queue so not actually running; running: active, looking for job or monitoring job.
     this.daemonTimer = null
     this.daemonInterval = 5000 // milliseconds
-    this.runnigBuild = null
+    this.buildTimeout = 10 * 60 * 1000 // 10 minutes  // TODO: move to config
+    this.runningBuild = null
   }
 
   async init() {
@@ -46,22 +48,35 @@ export class ScheduleHandlers {
     return { build: buildId, status: "stopped" }
   }
 
+  async getBuildDaemonStatus() {
+    const queueLengthData = await this.getQueueLength("queued")
+    // this.log.info(`queuelen: ${JSON.stringify(queueLengthData, null, 2)}`)
+    const queueLength = queueLengthData.data.count
+    const result = {
+      daemonStatus: this.daemonStatus,
+      currentBuild: this.currentBuild || "none",
+      daemonInterval: this.daemonInterval,
+      queuedBuilds: queueLength,
+    }
+    return result
+  }
+
   /**
    * Stop the build queue daemon so that no more builds will start. This Does Not stop a running build
    */
-  async pauseBuildQueue() {
+  async stopBuildDaemon() {
     this.runDaemon = false
     this._stopDaemon()
-    return { status: "paused", length: 5 }
+    return await this.getBuildDaemonStatus()
   }
 
   /**
    * Start the queue daemon if it is stopped
    */
-  async startBuildQueue() {
+  async startBuildDaemon() {
     this.runDaemon = true
     this._startDaemon()
-    return { status: "running", length: 5 }
+    return await this.getBuildDaemonStatus()
   }
 
   async getNextBuild() {
@@ -179,18 +194,28 @@ export class ScheduleHandlers {
   // Daemon methods and handlers ==========================================
   async _startDaemon() {
     if (this.runDaemon) {
-      if (this.daemonStatus != "running") {
-        this.daemonTimer = setInterval(
-          this._onDaemonTimer,
-          this.daemonInterval,
-          this
-        )
-        this.daemonStatus = "running"
-        this.log.info(
-          `Daemon started with interval: ${this.daemonInterval} milliseconds`
-        )
+      const nextBuild = await this.getNextBuild()
+      if (nextBuild.found > 0) {
+        if (this.daemonStatus != "running") {
+          this.daemonTimer = setInterval(
+            this._onDaemonTimer,
+            this.daemonInterval,
+            this
+          )
+          this.daemonStatus = "running"
+          this.log.info(
+            `Daemon started with interval: ${this.daemonInterval} milliseconds`
+          )
+        } else {
+          this.log.info("Daemon is already running. Request ignored.")
+        }
       } else {
-        this.log.info("Daemon is already running. Request ignored.")
+        // no queued builds, pause the daemon (do not start it.)
+        this.daemonStatus = "paused"
+        this.log.info(
+          `There are no queued builds. Daemon going into paused mode.`
+        )
+        return false
       }
 
       return true
