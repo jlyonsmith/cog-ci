@@ -265,7 +265,7 @@ export class SlackHandlers {
         },
       },
       {
-        regexp: /^.*?\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\b.*?\s+\btitle:\s+(.*)\b.*?\s+\bbranch:\s+(.*)\b.*?/m,
+        regexp: /^(.*?\bcreate pr|create pull request)\s+\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\b.*?\s+\btitle:\s+(.*)\b.*?\s+\bbranch:\s+(.*)\b.*?/m,
         func: (slackResponse) => {
           this.bitMQ.request(
             config.serviceName.bit,
