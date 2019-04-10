@@ -25,4 +25,12 @@
     buildChannel: "dev-bots",
     pullRequestChannel: "dev-bots",
   },
+  integration: {
+    rootPath: "/Users/breannaanderson/cog-ci-root",
+    templateDir: "default"
+  },
+  schedule: {
+    pollSeconds: 5,
+    processTimeoutSeconds: 30
+  }
 }

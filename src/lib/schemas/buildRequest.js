@@ -3,7 +3,7 @@ import { Schema } from "mongoose"
 export let buildRequestSchema = new Schema(
   {
     _id: { type: Schema.Types.ObjectId, required: true, auto: true },
-    build_id: Number,
+    buildId: Number,
     purpose: {
       type: String,
       enum: ["master", "release", "pullRequest", "deploy"],
@@ -15,7 +15,7 @@ export let buildRequestSchema = new Schema(
     repoSHA: String,
     status: {
       type: String,
-      enum: ["queued", "running", "killed", "fail", "success"],
+      enum: ["queued", "running", "killed", "timeout", "fail", "success"],
     },
     exitCode: Number,
     requestUser: String,
@@ -30,7 +30,7 @@ export let buildRequestSchema = new Schema(
 )
 
 buildRequestSchema.index(
-  { build_id: 1 },
+  { buildId: 1 },
   {
     unique: true,
   }
