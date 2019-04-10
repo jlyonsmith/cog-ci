@@ -13,7 +13,7 @@ export class ScheduleHandlers {
     this.daemonIntervalMilliseconds = config.get("schedule.pollSeconds") * 1000
     this.buildTimeoutMilliseconds =
       config.get("schedule.processTimeoutSeconds") * 1000
-    this.runningBuild = null
+    this.runningBuildId = null
     this.integrationMQ = container.integrationMQ
     this.integrationExchange = config.get("serviceName.integration")
   }
@@ -50,8 +50,18 @@ export class ScheduleHandlers {
    */
   async stopBuild(request) {
     const { buildId, status, user } = request
-    this.log.info(`Stopping Build: ${buildId} ... `)
-    // call to
+    this.log.info(`Stopping Process: ${buildId} ... `)
+    // call to integration service
+    const integrationResponse = await this.integrationMQ.requestAndReply(
+      this.integrationExchange,
+      "killTask",
+      { buildId: this.runningBuildId }
+    )
+    this.log.info(
+      `Kill Integration Response Process: ${JSON.stringify(
+        integrationResponse
+      )} `
+    )
     await this._updateBuildRequest(buildId, { status, endTime: new Date() })
 
     return { build: buildId, status: "stopped" }
@@ -62,7 +72,7 @@ export class ScheduleHandlers {
     const queueLength = queueLengthData.data.count
     const result = {
       daemonStatus: this.daemonStatus,
-      runningBuild: this.runningBuild || "none",
+      runningBuildId: this.runningBuildId || "none",
       daemonInterval: this.daemonIntervalMilliseconds,
       queuedBuilds: queueLength,
     }
@@ -287,10 +297,10 @@ export class ScheduleHandlers {
       //  check runtime and
       //    terminate if running too long
 
-      this.runningBuild = runningBuild.data.buildId
+      this.runningBuildId = runningBuild.data.buildId
       const startTime = runningBuild.data.startTime
       this.log.info(
-        `Running build found: ${this.runningBuild} started: ${startTime}`
+        `Running build found: ${this.runningBuildId} started: ${startTime}`
       )
 
       if (startTime) {
@@ -301,10 +311,10 @@ export class ScheduleHandlers {
         if (timeout < daemonNow.getTime()) {
           // build timed out.
           this.log.warn(
-            `Build buildId: ${this.runningBuild} timed out. Stopping`
+            `Build buildId: ${this.runningBuildId} timed out. Stopping`
           )
           await this.stopBuild({
-            buildId: this.runningBuild,
+            buildId: this.runningBuildId,
             status: "timeout",
             user: null,
           })
@@ -322,10 +332,10 @@ export class ScheduleHandlers {
         }
       } else {
         this.log.error(
-          `Build buildId: ${this.runningBuild}, start time not recorded`
+          `Build buildId: ${this.runningBuildId}, start time not recorded`
         )
         await this.stopBuild({
-          buildId: this.runningBuild,
+          buildId: this.runningBuildId,
           status: "killed",
           user: null,
         })
@@ -353,7 +363,7 @@ export class ScheduleHandlers {
             startTime: daemonNow,
             status: "running",
           })
-          this.runningBuild = nextBuild.data.buildId
+          this.runningBuildId = nextBuild.data.buildId
         } else {
           this.log.warn(
             `Integration task start failed: ${integrationReply.message}`
@@ -361,11 +371,11 @@ export class ScheduleHandlers {
           const updated = await this._updateBuildRequest(nextBuildId, {
             status: "fail",
           })
-          this.runningBuild = null
+          this.runningBuildId = null
         }
       } else {
         // put the daemon to sleep until something pushed
-        this.runningBuild = null
+        this.runningBuildId = null
         this.log.info(
           `Queue is empty, pushing pause on daemon until next reqest`
         )
