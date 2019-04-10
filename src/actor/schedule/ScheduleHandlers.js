@@ -10,8 +10,9 @@ export class ScheduleHandlers {
     this.runDaemon = true // the damon should run whenever there is work to do in the queue.
     this.daemonStatus = "stopped" // status: stopped: turned off;  waiting: on but nothing in the queue so not actually running; running: active, looking for job or monitoring job.
     this.daemonTimer = null
-    this.daemonIntervalMilliseconds = 5000 // milliseconds
-    this.buildTimeoutMilliseconds = 10 * 60 * 1000 // 10 minutes  // TODO: move to config
+    this.daemonIntervalMilliseconds = config.get("schedule.pollSeconds") * 1000
+    this.buildTimeoutMilliseconds =
+      config.get("schedule.processTimeoutSeconds") * 1000
     this.runningBuild = null
     this.integrationMQ = container.integrationMQ
     this.integrationExchange = config.get("serviceName.integration")
@@ -174,7 +175,28 @@ export class ScheduleHandlers {
    * Called by Builder Actor when build completed success or fail
    * @param {*} buildData
    */
-  async onBuildComplete(buildData) {}
+  async onBuildComplete(resultData) {
+    const now = new Date()
+    const buildId = resultData.buildId
+    this.log.info(
+      `onBuildComplete data: ${JSON.stringify(resultData, null, 2)}`
+    )
+
+    let update = {}
+    if (resultData.success) {
+      update = {
+        startTime: now,
+        status: "success",
+      }
+    } else {
+      update = {
+        startTime: now,
+        status: "fail",
+      }
+    }
+    const updated = await this._updateBuildRequest(buildId, update)
+    return {}
+  }
 
   async slackMessageReceived(message) {
     console.log("**************** MESSEGE RECEIVED BY SCHEDULER", message)
@@ -289,7 +311,14 @@ export class ScheduleHandlers {
         } else {
           // Check status of build.
           this.log.info("Check build status....")
-          // >>> TODO: Call Build Actor to check status.
+          const integrationResponse = await this.integrationMQ.requestAndReply(
+            this.integrationExchange,
+            "checkTaskStatus",
+            runningBuild.data
+          )
+          this.log.info(
+            `Status response: ${JSON.stringify(integrationResponse)}`
+          )
         }
       } else {
         this.log.error(
@@ -306,34 +335,41 @@ export class ScheduleHandlers {
       const nextBuild = await this.getNextBuild()
       if (nextBuild.found > 0) {
         const nextBuildId = nextBuild.data.buildId
+
         this.log.info(`startTask request ...`)
-        const integrationReply = await this.integrationMQ.requestAndReply(
+        const integrationResponse = await this.integrationMQ.requestAndReply(
           this.integrationExchange,
           "startTask",
           nextBuild.data
         )
+
+        const integrationReply = integrationResponse.reply
         this.log.info(
           `startTask reply: ${JSON.stringify(integrationReply, null, 2)}`
         )
         if (integrationReply.success == true) {
-          const updated = await _updateBuildRequest(nextBuildId, {
+          // record running build
+          const updated = await this._updateBuildRequest(nextBuildId, {
             startTime: daemonNow,
             status: "running",
           })
+          this.runningBuild = nextBuild.data.buildId
         } else {
           this.log.warn(
             `Integration task start failed: ${integrationReply.message}`
           )
-          const updated = await _updateBuildRequest(nextBuildId, {
+          const updated = await this._updateBuildRequest(nextBuildId, {
             status: "fail",
           })
+          this.runningBuild = null
         }
       } else {
         // put the daemon to sleep until something pushed
+        this.runningBuild = null
         this.log.info(
           `Queue is empty, pushing pause on daemon until next reqest`
         )
-        await this._stopDaemon()()
+        await this._stopDaemon()
       }
     }
   }
