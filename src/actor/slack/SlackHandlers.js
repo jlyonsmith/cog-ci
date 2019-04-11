@@ -177,14 +177,14 @@ export class SlackHandlers {
         },
       },
       {
-        name: "pull-request | pr",
-        regexp: /^(pull-request|pr)/,
+        name: "pull-request | pr | create pr | create pull request",
+        regexp: /^(pull-request|pr|create pr|create pull request)/i,
         func: async (slackResponse) => {
           const params = ["repo", "username", "title", "branch"]
           let errors = []
           for (let param in params) {
             const currentParam = params[param]
-            if (slackResponse.text.indexOf(currentParam) === -1) {
+            if (slackResponse.text.indexOf(currentParam + ":") === -1) {
               errors.push(currentParam)
             }
           }
@@ -197,6 +197,7 @@ export class SlackHandlers {
             for (const error in errors) {
               messageResponse += `\`${errors[error]}\` `
             }
+            messageResponse += `\nExample Usage:\n\`pull-request repo: testRepo username: bpt-build title: newPRTitle branch: beta\``
             this.postMessage({
               text: messageResponse,
               channel: message.channel,
@@ -227,11 +228,12 @@ export class SlackHandlers {
               this.postMessage(errPayload)
             }
           }
+          return {}
         },
       },
       {
         name: "show builds | show last [0-9] builds",
-        regexp: /^show +(?:last +([0-9]+) +)?builds/,
+        regexp: /^show +(?:last +([0-9]+) +)?builds/i,
         func: (slackResponse) => {
           const payload = {
             text: `:page_with_curl: List of builds requested by ${userString}`,
@@ -241,7 +243,7 @@ export class SlackHandlers {
       },
       {
         name: "show report",
-        regexp: /^show report/,
+        regexp: /^show report/i,
         func: (slackResponse) => {
           const payload = {
             text: `:scroll: Report requested by ${userString}`,
@@ -251,7 +253,7 @@ export class SlackHandlers {
       },
       {
         name: "show queue",
-        regexp: /^show queue/,
+        regexp: /^show queue/i,
         func: (slackResponse) => {
           const payload = {
             text: `:showmewhatyougot: Queue requested by ${userString}`,
@@ -290,14 +292,58 @@ export class SlackHandlers {
         },
       },
       {
-        name: "create pr | create pull request",
-        regexp: /^(.*?\bcreate pr|create pull request)\s+\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\b.*?\s+\btitle:\s+(.*)\b.*?\s+\bbranch:\s+(.*)\b.*?/m,
-        func: (slackResponse) => {
-          this.bitMQ.request(
-            config.serviceName.bit,
-            "createPullRequest",
-            slackResponse
-          )
+        name: "rollback",
+        regexp: /^rollback/i,
+        func: async (slackResponse) => {
+          const params = ["repo", "username", "tag"]
+          let errors = []
+          for (let param in params) {
+            const currentParam = params[param]
+            if (slackResponse.text.indexOf(currentParam + ":") === -1) {
+              errors.push(currentParam)
+            }
+          }
+          if (errors.length > 0) {
+            // message user about errors / missing keys
+
+            let messageResponse = `The following ${
+              errors.length === 1 ? "key is" : "keys are"
+            } missing from the request: `
+            for (const error in errors) {
+              messageResponse += `\`${errors[error]}\` `
+            }
+            messageResponse += `\nExample Usage:\n\`rollback repo: testRepo username: bpt-build tag: testTag\``
+            this.postMessage({
+              text: messageResponse,
+              channel: message.channel,
+              thread_ts: message.ts,
+              // as_user: false,
+              // icon_emoji: ":x:",
+            })
+          } else {
+            // TODO: call to schedule actor to create build
+            // wait on reply
+            // notify channel of build status
+            let payload = {
+              text: `:shell: Rollback initiated by ${userString}`,
+            }
+            this.postMessage(payload)
+            try {
+              const reply = await this.bitMQ.requestAndReply(
+                config.serviceName.bit,
+                "rollBackPreviousBuild",
+                slackResponse
+              )
+            } catch (err) {
+              const errPayload = {
+                text: `:sos: Error completing Rollback made by ${userString}. Details: \`${
+                  err.message
+                }\``,
+              }
+              this.postMessage(errPayload)
+            }
+          }
+          return {}
         },
       },
       {
@@ -374,7 +420,7 @@ export class SlackHandlers {
     const payload = {
       channel: request.channel || this.botChannelId,
       text:
-        `:airhorn: ${request.message}` ||
+        `:airhorn: ${request.message || request.text}` ||
         ":dumpster_fire: Channel notification requested without specifying content.",
     }
     this.postMessage(payload)
