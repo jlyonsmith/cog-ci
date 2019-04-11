@@ -20,6 +20,7 @@ export class IntegrationHandlers {
 
     this.rootPath = config.get("integration.rootPath")
     this.templateDir = config.get("integration.templateDir")
+    this.repoHost = config.get("integration.repoHost")
 
     this.buildId = null // id of current or last "build" request
     this.process = null // if running, current child process
@@ -31,8 +32,9 @@ export class IntegrationHandlers {
   // Public Methods ======================================
   async startTask(request) {
     let response = { success: true, message: "", data: null }
-    this.buildId = request.buildId
     this.log.info(`Integration.startTask: ${JSON.stringify(request, null, 2)}`)
+
+    this.buildId = request.buildId
     const dirCreated = await this._setupDirectory(request)
     if (dirCreated.success) {
       this._runProcess(dirCreated.path, request)
@@ -45,9 +47,9 @@ export class IntegrationHandlers {
   }
 
   async checkTaskStatus(request) {
-    this.log.info(
-      `Integration.checkTaskStatus: ${JSON.stringify(request, null, 2)}`
-    )
+    // this.log.info(
+    //   `Integration.checkTaskStatus: ${JSON.stringify(request, null, 2)}`
+    // )
     let result = { status: this.processStatus }
     if (this.process) {
       result = {
@@ -101,9 +103,12 @@ export class IntegrationHandlers {
   }
 
   async _runProcess(directory, request) {
+    const repoFullName = request.repoFullName
+    const [repoOwner, repoName] = repoFullName.split("/")
+
     const execPath = path.join(directory, "bootstrap.sh")
-    const args = []
-    const options = {}
+    const args = [request.purpose, this.repoHost, repoOwner, repoName]
+    const options = { cwd: directory }
     const self = this
     this.processStdout = ""
     this.processStderr = ""

@@ -27,10 +27,11 @@
   },
   integration: {
     rootPath: "/Users/breannaanderson/cog-ci-root",
-    templateDir: "default"
+    templateDir: "default",
+    repoHost: "git@bitbucket.org"
   },
   schedule: {
     pollSeconds: 5,
-    processTimeoutSeconds: 30
+    processTimeoutSeconds: 600
   }
 }
