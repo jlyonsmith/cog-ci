@@ -7,6 +7,7 @@ const bb = new Bitbucket()
 const regexOptions = {
   repoUser: /^.*?\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\b.*?/m,
   repoUserTitleBranch: /^.*?\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\b.*?\s+\btitle:\s+(.*)\b.*?\s+\bbranch:\s+(.*)\b.*?/m,
+  repoUserTag: /^.*?\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\btag:\s+(.*)\b.*?/m,
 }
 
 @autobind
@@ -14,6 +15,7 @@ export class BitHandlers {
   constructor(container) {
     this.db = container.db
     this.log = container.log
+    this.scheduleMQ = container.scheduleMQ
   }
 
   async bitbucketAuth() {
@@ -46,6 +48,28 @@ export class BitHandlers {
       _body: { title: title, source: { branch: { name: branch } } },
     })
     // .then(({ data, headers }) => console.log(data))
+  }
+
+  async rollBackPreviousBuild(info) {
+    const botUser = info.user
+    const regArr = await this.sanitizeText(
+      botUser,
+      info.text,
+      regexOptions.repoUserTag
+    )
+    const regObj = {
+      repo_slug: regArr[1],
+      username: regArr[2],
+      name: regArr[3],
+    }
+    // const { repo, username, tag } = regObj
+    const repoInfo = await this.getTag(regObj)
+    this.scheduleMQ.request(config.serviceName.schedule, "queueBuild", {
+      build_id: repoInfo.name,
+      purpose: "rollback",
+      repoFullName: repo.target.repository.full_name,
+      repoSHA: repoInfo.target.hash,
+    })
   }
 
   //Return the repository from the Bitbucket API that matchces the name of the provided repo name
@@ -99,6 +123,25 @@ export class BitHandlers {
         reviewers: [{ uuid: reviewers.uuid }],
       },
     })
+  }
+
+  async listTags(info) {
+    this.bitbucketAuth()
+    const { data } = await bb.repositories.listTags({
+      username: info.username,
+      repo_slug: info.repo_slug,
+    })
+    return data.values
+  }
+
+  async getTag(info) {
+    this.bitbucketAuth()
+    const { data } = await bb.repositories.getTag({
+      username: info.username,
+      repo_slug: info.repo_slug,
+      name: info.name,
+    })
+    return data
   }
 
   sanitizeText(bot, text, regexStr) {

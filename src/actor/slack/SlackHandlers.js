@@ -300,6 +300,16 @@ export class SlackHandlers {
           )
         },
       },
+      {
+        regexp: /^.*?\brollback\s+\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\btag:\s+(.*)\b.*?/m,
+        func: (slackResponse) => {
+          this.bitMQ.request(
+            config.serviceName.bit,
+            "rollbackPreviousBuild",
+            slackResponse
+          )
+        },
+      },
 
       // when /build +([a-z0-9, \.]+)/i
       //   do_build $1, is_from_slack_channel, slack_user_name
