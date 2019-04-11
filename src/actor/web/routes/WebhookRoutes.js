@@ -60,9 +60,10 @@ export class WebhookRoutes {
           purpose: "pullRequest",
           repoFullName: repo,
           branch: BBCloudRequest.pullrequest.source.branch.name,
-          pullRequest: link,
+          pullRequest: BBCloudRequest.pullrequest.id,
           pullRequestTitle: BBCloudRequest.pullrequest.title,
           repoSHA: BBCloudRequest.pullrequest.destination.commit.hash,
+          requestUser: username,
         })
         break
       case "pullrequest:comment_created":

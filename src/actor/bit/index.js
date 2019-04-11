@@ -1,5 +1,5 @@
 import config from "config"
-import { MS, getLog } from "../../lib"
+import { MS, getLog, MQ } from "../../lib"
 import { BitHandlers } from "./BitHandlers"
 import assert from "assert"
 
@@ -17,6 +17,8 @@ class BitActor {
       await ms.connect(uri.amqp)
 
       log.info(`Connected to RabbitMQ at ${uri.amqp}`)
+
+      container.scheduleMQ = new MQ(config.serviceName.schedule, container)
 
       container.handlers = new BitHandlers(container)
 
