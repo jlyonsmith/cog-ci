@@ -5,10 +5,10 @@ export const counterSchema = new Schema({
   seq: { type: Number, default: 0 },
 })
 
-counterSchema.methods.getNextIntegrationSequence = function() {
-  this.findAndModify({
-    query: { _id: "buildIdSeq" },
-    update: { $inc: { buildId: 1 } },
-    new: true,
-  })
+counterSchema.methods.getNextBuildSequence = function() {
+  this.findOneAndUpdate(
+    { _id: "buildIdSeq" },
+    { $inc: { seq: 1 } },
+    { new: true }
+  )
 }

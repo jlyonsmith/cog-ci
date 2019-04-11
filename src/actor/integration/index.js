@@ -1,5 +1,5 @@
 import config from "config"
-import { DB, MS, getLog, isProduction } from "../../lib"
+import { DB, MS, MQ, getLog, isProduction } from "../../lib"
 import { IntegrationHandlers } from "./IntegrationHandlers"
 
 class IntegrationActor {
@@ -10,21 +10,19 @@ class IntegrationActor {
 
     try {
       const ms = new MS(serviceName, { durable: false }, container)
-
       container.ms = ms
-
       const db = new DB(container)
-
       container.db = db
-
+      const mq = new MQ(serviceName, container)
+      container.mq = mq
+      container.scheduleMQ = new MQ(config.serviceName.schedule, container)
       const uri = await config.get("uri")
 
       await Promise.all([
-        db.connect(
-          uri.mongo,
-          isProduction
-        ),
+        db.connect(uri.mongo, isProduction),
         ms.connect(uri.amqp),
+        mq.connect(uri.amqp),
+        container.scheduleMQ.connect(uri.amqp),
       ])
 
       log.info(`Connected to MongoDB at ${uri.mongo}`)

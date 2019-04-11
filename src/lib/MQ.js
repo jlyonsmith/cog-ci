@@ -78,7 +78,6 @@ export class MQ extends EventEmitter {
   async request(exchangeName, msgType, msg) {
     const correlationId = uuidv4()
     const channel = await this.connection.createChannel()
-
     await channel.checkExchange(exchangeName)
     await channel.publish(exchangeName, "", Buffer.from(JSON.stringify(msg)), {
       type: msgType,
