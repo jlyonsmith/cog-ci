@@ -27,7 +27,7 @@
   },
   integration: {
     rootPath: "/Users/breannaanderson/cog-ci-root",
-    templateDir: "default",
+    templateDir: "template",
     repoHost: "git@bitbucket.org"
   },
   schedule: {

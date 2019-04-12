@@ -105,9 +105,16 @@ export class IntegrationHandlers {
   async _runProcess(directory, request) {
     const repoFullName = request.repoFullName
     const [repoOwner, repoName] = repoFullName.split("/")
-
-    const execPath = path.join(directory, "bootstrap.sh")
-    const args = [request.purpose, this.repoHost, repoOwner, repoName]
+    const executable = request.purpose + ".sh"
+    const execPath = path.join(directory, executable)
+    const args = [
+      request.purpose,
+      this.repoHost,
+      repoOwner,
+      repoName,
+      request.branch,
+      request.pullRequest,
+    ]
     const options = { cwd: directory }
     const self = this
     this.processStdout = ""
@@ -119,12 +126,17 @@ export class IntegrationHandlers {
       options,
       (error, stdout, stderr) => {
         let result = {}
+        const message = stdout + "\nError: " + stderr
         if (error) {
           self.log.error(`Process Error :${error.message} `)
           self.process = null
           self.processStderr = stderr
           self.processStatus = "fail"
-          result = { buildId: self.buildId, success: false, message: stderr }
+          result = {
+            buildId: self.buildId,
+            success: false,
+            message,
+          }
         } else {
           this.log.info(
             `Process completed \nstdout: ${stdout} \nstderr: ${stderr}`
@@ -133,7 +145,11 @@ export class IntegrationHandlers {
           self.processStderr = stderr
           self.process = null
           self.processStatus = "success"
-          result = { buildId: self.buildId, success: true, message: stdout }
+          result = {
+            buildId: self.buildId,
+            success: true,
+            message,
+          }
         }
         // fire and forget callback to Scheduler with process termination info.
         this.log.info(
