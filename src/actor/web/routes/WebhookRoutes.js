@@ -30,10 +30,30 @@ export class WebhookRoutes {
         this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
           message: `${username} has created a Pull Request for the ${repo} repository. Link: ${link}`,
         })
+        this.scheduleMQ.request(config.serviceName.schedule, "queueBuild", {
+          build_id: BBCloudRequest.pullrequest.id,
+          purpose: "pullRequest",
+          repoFullName: repo,
+          branch: BBCloudRequest.pullrequest.source.branch.name,
+          pullRequest: BBCloudRequest.pullrequest.id,
+          pullRequestTitle: BBCloudRequest.pullrequest.title,
+          repoSHA: BBCloudRequest.pullrequest.destination.commit.hash,
+          requestUser: username,
+        })
         break
       case "pullrequest:updated":
         this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
           message: `${username} has updated a Pull Request to the ${repo} repository. Link: ${link}`,
+        })
+        this.scheduleMQ.request(config.serviceName.schedule, "queueBuild", {
+          build_id: BBCloudRequest.pullrequest.id,
+          purpose: "pullRequest",
+          repoFullName: repo,
+          branch: BBCloudRequest.pullrequest.source.branch.name,
+          pullRequest: BBCloudRequest.pullrequest.id,
+          pullRequestTitle: BBCloudRequest.pullrequest.title,
+          repoSHA: BBCloudRequest.pullrequest.destination.commit.hash,
+          requestUser: username,
         })
         break
       case "pullrequest:approved":
@@ -49,6 +69,17 @@ export class WebhookRoutes {
       case "pullrequest:rejected":
         this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
           message: `${username} has declined a Pull Request to the ${repo} repository. Great shame is heaped upon ${author}. Link: ${link}`,
+        })
+        // Notify the scheduler to remove this from the queue????
+        this.scheduleMQ.request(config.serviceName.schedule, "queueBuild", {
+          build_id: BBCloudRequest.pullrequest.id,
+          purpose: "pullRequest",
+          repoFullName: repo,
+          branch: BBCloudRequest.pullrequest.source.branch.name,
+          pullRequest: BBCloudRequest.pullrequest.id,
+          pullRequestTitle: BBCloudRequest.pullrequest.title,
+          repoSHA: BBCloudRequest.pullrequest.destination.commit.hash,
+          requestUser: username,
         })
         break
       case "pullrequest:fulfilled":

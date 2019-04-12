@@ -47,9 +47,9 @@ export class BitHandlers {
       username: username,
       _body: { title: title, source: { branch: { name: branch } } },
     })
-    // .then(({ data, headers }) => console.log(data))
   }
 
+  //In the event of a rollback, find the specific tag and pass that info to the scheduler/queuebuild
   async rollBackPreviousBuild(info) {
     const botUser = info.user
     const regArr = await this.sanitizeText(
@@ -62,7 +62,6 @@ export class BitHandlers {
       username: regArr[2],
       name: regArr[3],
     }
-    // const { repo, username, tag } = regObj
     const repoInfo = await this.getTag(regObj)
     this.scheduleMQ.request(config.serviceName.schedule, "queueBuild", {
       build_id: repoInfo.name,
@@ -97,6 +96,7 @@ export class BitHandlers {
       .then((data) => console.log(data))
   }
 
+  //Find users
   async userLookup(team, individual) {
     this.bitbucketAuth()
     const { data, headers } = await bb.teams.getAllMembers({ username: team })
@@ -111,6 +111,7 @@ export class BitHandlers {
     }
   }
 
+  // Add users to a Pull Request. First, find the user's ID via the lookup tool (get the uuid) and then trigger bitbucket api to update PR with new data
   async addReviewerToPullRequest(info) {
     this.bitbucketAuth()
     let reviewers = await this.userLookup(info.team, info.individual)
@@ -125,6 +126,7 @@ export class BitHandlers {
     })
   }
 
+  // get an array of tags applied to the commits in the repo
   async listTags(info) {
     this.bitbucketAuth()
     const { data } = await bb.repositories.listTags({
@@ -134,6 +136,7 @@ export class BitHandlers {
     return data.values
   }
 
+  // get details about commit based on a specific tag
   async getTag(info) {
     this.bitbucketAuth()
     const { data } = await bb.repositories.getTag({
