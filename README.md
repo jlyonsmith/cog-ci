@@ -116,6 +116,12 @@ Firstly, set up a [Slack](https://slack.com) account for your organization. Navi
 
 Now you have a build bot configured, start the `cog-ci` script. Next start a private conversation with your bot and ask it something like, "What is your status?" Actually, it will respond to just the words **status** and **help** too.
 
+### BitBucket
+
+If you are using bitbucket as your repo host, as we assume we are for this round, set it up here.  
+
+... Fill in Details ...
+
 ### GitHub
 
 Next it's time to get GitHub integration working. You'll need to generate a personal access token for the user that will be committing build tags and version updates for the build.
