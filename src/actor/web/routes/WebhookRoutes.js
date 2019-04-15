@@ -71,7 +71,7 @@ export class WebhookRoutes {
           message: `${username} has declined a Pull Request to the ${repo} repository. Great shame is heaped upon ${author}. Link: ${link}`,
         })
         // Notify the scheduler to remove this from the queue????
-        this.scheduleMQ.request(config.serviceName.schedule, "queueBuild", {
+        this.scheduleMQ.request(config.serviceName.schedule, "stopBuild", {
           build_id: BBCloudRequest.pullrequest.id,
           purpose: "pullRequest",
           repoFullName: repo,
