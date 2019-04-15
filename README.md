@@ -35,28 +35,47 @@ On Linux, install the full Cog CI service using:
 npm install cog-ci -g
 ```
 
-Before you do anything create a `cog-config.json5` file with the following format:
+Before you do anything create a `config/default.json5` file with the following format:
 
 ```json5
 {
-  webhookPort: 4567
-  webhookSecretToken: '...',
-  webhookRepoFullName = '.../...'
-  config.github_api_token = '...'
-  config.slack_api_token = '...'
-  config.slack_build_channel = "#..."
-  config.slack_pr_channel = "#..."
-  config.slack_builders = ['@...']
-  config.build_output_dir = "$HOME/Projects/..."
-  config.num_saved_build_outputs = 3
-  config.pull_request_build_script = "bin/pull-request-build"
-  config.branch_build_script = "bin/branch-build"
-  config.pull_request_root_dir = "$HOME/Projects/..."
-  config.branch_root_dir = "$HOME/Projects/..."
-  config.allowed_build_branches = ['v1.0']
-  config.server_base_uri = "https://..."
-  config.mongo_uri = "mongodb://localhost:27017/..."
-end
+  "logDir": "",
+  "actors": [
+    { "name": "web" },
+    { "name": "integration" },
+    { "name": "git" },
+    { "name": "bit" },
+    { "name": "schedule" },
+    { "name": "slack" }
+  ],
+  "serviceName": {
+    "system": "cog",
+    "server": "cog-server",
+    "web": "cog-web",
+    "integration": "cog-integration",
+    "git": "cog-git",
+    "bit": "cog-bit",
+    "schedule": "cog-schedule",
+    "slack": "cog-slack"
+  },
+  "web": {
+    "port": "8005"
+  },
+  "slack": {
+    "buildChannel": "dev-bots",
+    "pullRequestChannel": "dev-bots",
+    "token": "xxxxxxxxxxxxxxxxx"
+  },
+  "integration": {
+    "rootPath": "$HOME/cog-root",
+    "templateDir": "template",
+    "repoHost": "git@bitbucket.org"
+  },
+  "schedule": {
+    "pollSeconds": 5,
+    "processTimeoutSeconds": 600
+  }
+}
 ```
 
 Customize the build scripts based on your project type.
