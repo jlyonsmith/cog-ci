@@ -63,6 +63,7 @@ export class BitHandlers {
       name: regArr[3],
     }
     const repoInfo = await this.getTag(regObj)
+    //more likely, this would be sent to a deployment method, not the queue
     this.scheduleMQ.request(config.serviceName.schedule, "queueBuild", {
       build_id: repoInfo.name,
       purpose: "rollback",
@@ -130,8 +131,8 @@ export class BitHandlers {
   async listTags(info) {
     this.bitbucketAuth()
     const { data } = await bb.repositories.listTags({
-      username: info.username,
-      repo_slug: info.repo_slug,
+      username: info.username, //username or UUID
+      repo_slug: info.repo_slug, //repo
     })
     return data.values
   }
@@ -140,10 +141,68 @@ export class BitHandlers {
   async getTag(info) {
     this.bitbucketAuth()
     const { data } = await bb.repositories.getTag({
-      username: info.username,
-      repo_slug: info.repo_slug,
-      name: info.name,
+      username: info.username, //username or UUID
+      repo_slug: info.repo_slug, //repo
+      name: info.name, //this is the tag name
     })
+    return data
+  }
+
+  //
+  async findCommit(info) {
+    const { username, sha, repo } = info
+    this.bitbucketAuth()
+    const { data, headers } = await bb.commits.get({
+      username: username,
+      node: sha,
+      repo_slug: repo,
+    })
+    return data
+  }
+
+  async findBuildStatusForCommit(info) {
+    const { username, sha, repo } = info
+    this.bitbucketAuth()
+    const { data, headers } = await bb.commitstatuses.list({
+      username: username,
+      node: sha,
+      repo_slug: repo,
+    })
+    return data.values
+  }
+
+  async setBuildStatus(info) {
+    const {
+      username,
+      sha,
+      repo,
+      state,
+      name,
+      description,
+      created_on,
+      updated_on,
+      url,
+    } = info
+    this.bitbucketAuth()
+    const { data, headers } = await bb.commitstatuses
+      .createBuildStatus({
+        repo_slug: repo,
+        username: username,
+        node: sha,
+        _body: {
+          type: "commit",
+          key: "build",
+          state: state,
+          name: name,
+          description: description,
+          created_on: created_on,
+          updated_on: updated_on,
+          url: url,
+        },
+      })
+      .catch((err) => {
+        console.log(err)
+      })
     return data
   }
 
