@@ -78,6 +78,31 @@ Before you do anything create a `config/default.json5` file with the following f
 }
 ```
 
+Use consul-extra tool  to set up some configuration parameters:
+
+```
+{
+  "cog": {
+    "config": {
+      "production": {
+        "uri": {
+          "amqp": "amqp://localhost",
+          "mongo": "mongodb://localhost/cog-v1",
+          "redis": "redis://localhost"
+        }
+      },
+      "development": {
+        "uri": {
+          "amqp": "amqp://localhost",
+          "mongo": "mongodb://localhost/cog-v1",
+          "redis": "redis://localhost"
+        }
+      }
+    }
+  }
+}
+```
+
 Customize the build scripts based on your project type.
 
 ### Slack
