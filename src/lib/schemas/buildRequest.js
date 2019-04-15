@@ -18,6 +18,7 @@ export let buildRequestSchema = new Schema(
       enum: ["queued", "running", "killed", "timeout", "fail", "success"],
     },
     exitCode: Number,
+    resultMessage: String,
     requestUser: String,
     startedBy: Schema.Types.ObjectId,
     stoppedBy: Schema.Types.ObjectId,

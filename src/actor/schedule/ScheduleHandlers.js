@@ -195,21 +195,18 @@ export class ScheduleHandlers {
     let update = {}
     if (resultData.success) {
       update = {
-        startTime: now,
+        stopTime: now,
         status: "success",
+        resultMessage: resultData.message,
       }
     } else {
       update = {
-        startTime: now,
+        stopTime: now,
         status: "fail",
+        resultMessage: resultData.message,
       }
     }
     const updated = await this._updateBuildRequest(buildId, update)
-    return {}
-  }
-
-  async slackMessageReceived(message) {
-    console.log("**************** MESSEGE RECEIVED BY SCHEDULER", message)
     return {}
   }
 
