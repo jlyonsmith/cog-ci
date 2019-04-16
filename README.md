@@ -37,43 +37,43 @@ npm install cog-ci -g
 
 Before you do anything create a `config/default.json5` file with the following format:
 
-```json5
+```
 {
-  logDir: "",
-  actors: [
-    { name: "web" },
-    { name: "integration" },
-    { name: "git" },
-    { name: "bit" },
-    { name: "schedule" },
-    { name: "slack" },
+  "logDir": "",
+  "actors": [
+    { "name": "web" },
+    { "name": "integration" },
+    { "name": "git" },
+    { "name": "bit" },
+    { "name": "schedule" },
+    { "name": "slack" },
   ],
-  serviceName: {
-    system: "cog",
-    server: "cog-server",
-    web: "cog-web",
-    integration: "cog-integration",
-    git: "cog-git",
-    bit: "cog-bit",
-    schedule: "cog-schedule",
-    slack: "cog-slack",
+  "serviceName": {
+    "system": "cog",
+    "server": "cog-server",
+    "web": "cog-web",
+    "integration": "cog-integration",
+    "git': "cog-git",
+    "bit': "cog-bit",
+    "schedule": "cog-schedule",
+    "slack": "cog-slack",
   },
-  web: {
-    port: "8005",
+  "web": {
+    "port": "8005",
   },
-  slack: {
-    buildChannel: "dev-bots",
-    pullRequestChannel: "dev-bots",
-    token: "xxxxxxxxxxxxxxxxx",
+  "slack": {
+    "buildChannel": "dev-bots",
+    "pullRequestChannel": "dev-bots",
+    "token": "xxxxxxxxxxxxxxxxx",
   },
-  integration: {
-    rootPath: "$HOME/cog-root",
-    templateDir: "template",
-    repoHost: "git@bitbucket.org",
+  "integration": {
+    "rootPath": "$HOME/cog-root",
+    "templateDir": "template",
+    "repoHost": "git@bitbucket.org",
   },
-  schedule: {
-    pollSeconds: 5,
-    processTimeoutSeconds: 600,
+  "schedule": {
+    "pollSeconds": 5,
+    "processTimeoutSeconds": 600,
   },
 }
 ```
@@ -121,6 +121,8 @@ Now you have a build bot configured, start the `cog-ci` script. Next start a pri
 If you are using bitbucket cloud as your repo host, as we assume we are for this round, set it up here.
 
 #### Create BitBucket App password
+
+(Used for API Authentication)
 
 1. Click on your account icon in the bottom left corner
 2. Select "Bitbucket settings"
