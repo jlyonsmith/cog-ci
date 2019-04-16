@@ -1,37 +1,38 @@
 {
-  logDir: "",
-  actors: [
-    { name: "web" },
-    { name: "integration" },
-    { name: "git" },
-    { name: "bit" },
-    { name: "schedule" },
-    { name: "slack" },
+  "logDir": "",
+  "actors": [
+    { "name": "web" },
+    { "name": "integration" },
+    { "name": "git" },
+    { "name": "bit" },
+    { "name": "schedule" },
+    { "name": "slack" }
   ],
-  serviceName: {
-    system: "cog",
-    server: "cog-server",
-    web: "cog-web",
-    integration: "cog-integration",
-    git: "cog-git",
-    bit: "cog-bit",
-    schedule: "cog-schedule",
-    slack: "cog-slack",
+  "serviceName": {
+    "system": "cog",
+    "server": "cog-server",
+    "web": "cog-web",
+    "integration": "cog-integration",
+    "git": "cog-git",
+    "bit": "cog-bit",
+    "schedule": "cog-schedule",
+    "slack": "cog-slack"
   },
-  web: {
-    port: "8005",
+  "web": {
+    "port": "8005"
   },
-  slack: {
-    buildChannel: "dev-bots",
-    pullRequestChannel: "dev-bots",
+  "slack": {
+    "buildChannel": "dev-bots",
+    "pullRequestChannel": "dev-bots",
+    "token": "xoxb-343864842001-608382556132-ZRbA4JjXZXBRMS2RjkIKDgwK"
   },
-  integration: {
-    rootPath: "/Users/breannaanderson/cog-ci-root",
-    templateDir: "template",
-    repoHost: "git@bitbucket.org"
+  "integration": {
+    "rootPath": "/Users/breannaanderson/cog-ci-root",
+    "templateDir": "template",
+    "repoHost": "git@bitbucket.org"
   },
-  schedule: {
-    pollSeconds: 5,
-    processTimeoutSeconds: 600
+  "schedule": {
+    "pollSeconds": 5,
+    "processTimeoutSeconds": 600
   }
 }

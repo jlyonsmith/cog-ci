@@ -18,6 +18,8 @@ class SlackActor {
     container.mq = new MQ(serviceNames.schedule, container)
     container.bitMQ = new MQ(serviceNames.bit, container)
 
+    log.info(`SlackActor.run: slackToken: ${container.slack.token}`)
+
     await Promise.all([
       container.db.connect(uri.mongo, isProduction),
       container.ms.connect(uri.amqp),

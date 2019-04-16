@@ -159,12 +159,7 @@ export class SlackHandlers {
       {
         name: "build",
         regexp: /^build+([a-z0-9, \.]+)/i,
-        func: (slackResponse) => {
-          const payload = {
-            text: `:building_construction: Build request made by ${userString}`,
-          }
-          this.postMessage(payload)
-        },
+        func: this.handleBuild,
       },
       {
         name: "status | show status",
@@ -179,57 +174,58 @@ export class SlackHandlers {
       {
         name: "pull-request | pr | create pr | create pull request",
         regexp: /^(pull-request|pr|create pr|create pull request)/i,
-        func: async (slackResponse) => {
-          const params = ["repo", "username", "title", "branch"]
-          let errors = []
-          for (let param in params) {
-            const currentParam = params[param]
-            if (slackResponse.text.indexOf(currentParam + ":") === -1) {
-              errors.push(currentParam)
-            }
-          }
-          if (errors.length > 0) {
-            // message user about errors / missing keys
+        func: this.handlePullRequest,
+        // func: async (slackResponse) => {
+        //   const params = ["repo", "username", "title", "branch"]
+        //   let errors = []
+        //   for (let param in params) {
+        //     const currentParam = params[param]
+        //     if (slackResponse.text.indexOf(currentParam + ":") === -1) {
+        //       errors.push(currentParam)
+        //     }
+        //   }
+        //   if (errors.length > 0) {
+        //     // message user about errors / missing keys
 
-            let messageResponse = `The following ${
-              errors.length === 1 ? "key is" : "keys are"
-            } missing from the request: `
-            for (const error in errors) {
-              messageResponse += `\`${errors[error]}\` `
-            }
-            messageResponse += `\nExample Usage:\n\`pull-request repo: testRepo username: bpt-build title: newPRTitle branch: beta\``
-            this.postMessage({
-              text: messageResponse,
-              channel: message.channel,
-              thread_ts: message.ts,
-              // as_user: false,
-              // icon_emoji: ":x:",
-            })
-          } else {
-            // TODO: call to schedule actor to create build
-            // wait on reply
-            // notify channel of build status
-            let payload = {
-              text: `:shell: Pull Request made by ${userString}`,
-            }
-            this.postMessage(payload)
-            try {
-              const reply = await this.bitMQ.requestAndReply(
-                config.serviceName.bit,
-                "createPullRequest",
-                slackResponse
-              )
-            } catch (err) {
-              const errPayload = {
-                text: `:sos: Error completing Pull Request made by ${userString}. Details: \`${
-                  err.message
-                }\``,
-              }
-              this.postMessage(errPayload)
-            }
-          }
-          return {}
-        },
+        //     let messageResponse = `The following ${
+        //       errors.length === 1 ? "key is" : "keys are"
+        //     } missing from the request: `
+        //     for (const error in errors) {
+        //       messageResponse += `\`${errors[error]}\` `
+        //     }
+        //     messageResponse += `\nExample Usage:\n\`pull-request repo: testRepo username: bpt-build title: newPRTitle branch: beta\``
+        //     this.postMessage({
+        //       text: messageResponse,
+        //       channel: message.channel,
+        //       thread_ts: message.ts,
+        //       // as_user: false,
+        //       // icon_emoji: ":x:",
+        //     })
+        //   } else {
+        //     // TODO: call to schedule actor to create build
+        //     // wait on reply
+        //     // notify channel of build status
+        //     let payload = {
+        //       text: `:shell: Pull Request made by ${userString}`,
+        //     }
+        //     this.postMessage(payload)
+        //     try {
+        //       const reply = await this.bitMQ.requestAndReply(
+        //         config.serviceName.bit,
+        //         "createPullRequest",
+        //         slackResponse
+        //       )
+        //     } catch (err) {
+        //       const errPayload = {
+        //         text: `:sos: Error completing Pull Request made by ${userString}. Details: \`${
+        //           err.message
+        //         }\``,
+        //       }
+        //       this.postMessage(errPayload)
+        //     }
+        //   }
+        //   return {}
+        // },
       },
       {
         name: "show builds | show last [0-9] builds",
@@ -405,6 +401,89 @@ export class SlackHandlers {
       )
     }
   }
+
+  // Command Handlers ========================================================
+
+  async handlePullRequest(message) {
+    const userString = `<@${message.user}>`
+
+    const params = ["repo", "username", "title", "branch"]
+    let errors = []
+    for (let param in params) {
+      const currentParam = params[param]
+      if (message.text.indexOf(currentParam + ":") === -1) {
+        errors.push(currentParam)
+      }
+    }
+    if (errors.length > 0) {
+      // message user about errors / missing keys
+
+      let messageResponse = `The following ${
+        errors.length === 1 ? "key is" : "keys are"
+      } missing from the request: `
+      for (const error in errors) {
+        messageResponse += `\`${errors[error]}\` `
+      }
+      messageResponse += `\nExample Usage:\n\`pull-request repo: testRepo username: bpt-build title: newPRTitle branch: beta\``
+      this.postMessage({
+        text: messageResponse,
+        channel: message.channel,
+        thread_ts: message.ts,
+        // as_user: false,
+        // icon_emoji: ":x:",
+      })
+    } else {
+      // TODO: call to schedule actor to create build
+      // wait on reply
+      // notify channel of build status
+      // BDA: no creation of PR from bitbucket should trigger the pr build (test).
+
+      let payload = {
+        text: `:shell: Pull Request made by ${userString}`,
+      }
+      this.postMessage(payload)
+      try {
+        const reply = await this.bitMQ.requestAndReply(
+          config.serviceName.bit,
+          "createPullRequest",
+          message
+        )
+      } catch (err) {
+        const errPayload = {
+          text: `:sos: Error completing Pull Request made by ${userString}. Details: \`${
+            err.message
+          }\``,
+        }
+        this.postMessage(errPayload)
+      }
+    }
+    return {}
+  }
+
+  async handleBuild(message) {
+    const userString = `<@${message.user}>`
+    const payload = {
+      text: `:building_construction: A Build request made by ${userString}`,
+    }
+    this.postMessage(payload)
+
+    try {
+      const reply = await this.bitMQ.requestAndReply(
+        config.serviceName.bit,
+        "runBuild",
+        message
+      )
+    } catch (err) {
+      const errPayload = {
+        text: `:sos: Error completing Build made by ${userString}. Details: \`${
+          err.message
+        }\``,
+      }
+      this.postMessage(errPayload)
+    }
+  }
+
+  // End Command Handlers ======================================================
 
   async notifyChannel(request) {
     const payload = {
