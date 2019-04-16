@@ -37,7 +37,7 @@ npm install cog-ci -g
 
 Before you do anything create a `config/default.json5` file with the following format:
 
-```json5
+```
 {
   "logDir": "",
   "actors": [
@@ -78,7 +78,7 @@ Before you do anything create a `config/default.json5` file with the following f
 }
 ```
 
-Use consul-extra tool  to set up some configuration parameters:
+Use consul-extra tool to set up some configuration parameters:
 
 ```
 {
@@ -118,9 +118,24 @@ Now you have a build bot configured, start the `cog-ci` script. Next start a pri
 
 ### BitBucket
 
-If you are using bitbucket as your repo host, as we assume we are for this round, set it up here.  
+If you are using bitbucket cloud as your repo host, as we assume we are for this round, set it up here.
 
-... Fill in Details ...
+#### Create BitBucket App password
+
+(Used for API Authentication)
+
+1. Click on your account icon in the bottom left corner
+2. Select "Bitbucket settings"
+3. Under "Access Managemenet" select "App passwords" and click "Create app password"
+4. Add this password to your config file
+
+#### Prepare your repo to use Webhooks
+
+1. Settings -> Webhooks -> Add webhook
+2. Give it a title and enter the URl for where the web actor will recieve the webhook request
+3. Set the triggers.
+4. Triggers -> Choose from a full list of triggers
+5. Select all the checkboxes under "Pull Request" then click "Save"
 
 ### GitHub
 
