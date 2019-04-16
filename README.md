@@ -46,7 +46,7 @@ Before you do anything create a `config/default.json5` file with the following f
     { "name": "git" },
     { "name": "bit" },
     { "name": "schedule" },
-    { "name": "slack" },
+    { "name": "slack" }
   ],
   "serviceName": {
     "system": "cog",
@@ -56,25 +56,25 @@ Before you do anything create a `config/default.json5` file with the following f
     "git": "cog-git",
     "bit": "cog-bit",
     "schedule": "cog-schedule",
-    "slack": "cog-slack",
+    "slack": "cog-slack"
   },
   "web": {
-    "port": "8005",
+    "port": "8005"
   },
   "slack": {
     "buildChannel": "dev-bots",
     "pullRequestChannel": "dev-bots",
-    "token": "xxxxxxxxxxxxxxxxx",
+    "token": "xxxxxxxxxxxxxxxxx"
   },
   "integration": {
     "rootPath": "$HOME/cog-root",
     "templateDir": "template",
-    "repoHost": "git@bitbucket.org",
+    "repoHost": "git@bitbucket.org"
   },
   "schedule": {
     "pollSeconds": 5,
-    "processTimeoutSeconds": 600,
-  },
+    "processTimeoutSeconds": 600
+  }
 }
 ```
 
