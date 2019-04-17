@@ -291,7 +291,7 @@ export class SlackHandlers {
         name: "rollback",
         regexp: /^rollback/i,
         func: async (slackResponse) => {
-          const params = ["repo", "username", "tag"]
+          const params = ["repo", "tag"]
           let errors = []
           for (let param in params) {
             const currentParam = params[param]
@@ -308,7 +308,7 @@ export class SlackHandlers {
             for (const error in errors) {
               messageResponse += `\`${errors[error]}\` `
             }
-            messageResponse += `\nExample Usage:\n\`rollback repo: testRepo username: bpt-build tag: testTag\``
+            messageResponse += `\nExample Usage:\n\`rollback repo: testRepo tag: testTag\``
             this.postMessage({
               text: messageResponse,
               channel: message.channel,
@@ -407,7 +407,7 @@ export class SlackHandlers {
   async handlePullRequest(message) {
     const userString = `<@${message.user}>`
 
-    const params = ["repo", "username", "title", "branch"]
+    const params = ["repo", "title", "branch"]
     let errors = []
     for (let param in params) {
       const currentParam = params[param]
@@ -424,7 +424,7 @@ export class SlackHandlers {
       for (const error in errors) {
         messageResponse += `\`${errors[error]}\` `
       }
-      messageResponse += `\nExample Usage:\n\`pull-request repo: testRepo username: bpt-build title: newPRTitle branch: beta\``
+      messageResponse += `\nExample Usage:\n\`pull-request repo: testRepo title: newPRTitle branch: beta\``
       this.postMessage({
         text: messageResponse,
         channel: message.channel,

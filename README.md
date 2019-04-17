@@ -35,28 +35,72 @@ On Linux, install the full Cog CI service using:
 npm install cog-ci -g
 ```
 
-Before you do anything create a `cog-config.json5` file with the following format:
+Before you do anything create a `config/default.json5` file with the following format:
 
-```json5
+```
 {
-  webhookPort: 4567
-  webhookSecretToken: '...',
-  webhookRepoFullName = '.../...'
-  config.github_api_token = '...'
-  config.slack_api_token = '...'
-  config.slack_build_channel = "#..."
-  config.slack_pr_channel = "#..."
-  config.slack_builders = ['@...']
-  config.build_output_dir = "$HOME/Projects/..."
-  config.num_saved_build_outputs = 3
-  config.pull_request_build_script = "bin/pull-request-build"
-  config.branch_build_script = "bin/branch-build"
-  config.pull_request_root_dir = "$HOME/Projects/..."
-  config.branch_root_dir = "$HOME/Projects/..."
-  config.allowed_build_branches = ['v1.0']
-  config.server_base_uri = "https://..."
-  config.mongo_uri = "mongodb://localhost:27017/..."
-end
+  "logDir": "",
+  "actors": [
+    { "name": "web" },
+    { "name": "integration" },
+    { "name": "git" },
+    { "name": "bit" },
+    { "name": "schedule" },
+    { "name": "slack" }
+  ],
+  "serviceName": {
+    "system": "cog",
+    "server": "cog-server",
+    "web": "cog-web",
+    "integration": "cog-integration",
+    "git": "cog-git",
+    "bit": "cog-bit",
+    "schedule": "cog-schedule",
+    "slack": "cog-slack"
+  },
+  "web": {
+    "port": "8005"
+  },
+  "slack": {
+    "buildChannel": "dev-bots",
+    "pullRequestChannel": "dev-bots",
+    "token": "xxxxxxxxxxxxxxxxx"
+  },
+  "integration": {
+    "rootPath": "$HOME/cog-root",
+    "templateDir": "template",
+    "repoHost": "git@bitbucket.org"
+  },
+  "schedule": {
+    "pollSeconds": 5,
+    "processTimeoutSeconds": 600
+  }
+}
+```
+
+Use consul-extra tool to set up some configuration parameters:
+
+```
+{
+  "cog": {
+    "config": {
+      "production": {
+        "uri": {
+          "amqp": "amqp://localhost",
+          "mongo": "mongodb://localhost/cog-v1",
+          "redis": "redis://localhost"
+        }
+      },
+      "development": {
+        "uri": {
+          "amqp": "amqp://localhost",
+          "mongo": "mongodb://localhost/cog-v1",
+          "redis": "redis://localhost"
+        }
+      }
+    }
+  }
+}
 ```
 
 Customize the build scripts based on your project type.
@@ -71,6 +115,27 @@ Firstly, set up a [Slack](https://slack.com) account for your organization. Navi
 4. On the next screen, give the bot a description and copy the API token to the `.bbconfig` file as the `config.slack_api_token` value.
 
 Now you have a build bot configured, start the `cog-ci` script. Next start a private conversation with your bot and ask it something like, "What is your status?" Actually, it will respond to just the words **status** and **help** too.
+
+### BitBucket
+
+If you are using bitbucket cloud as your repo host, as we assume we are for this round, set it up here.
+
+#### Create BitBucket App password
+
+(Used for API Authentication)
+
+1. Click on your account icon in the bottom left corner
+2. Select "Bitbucket settings"
+3. Under "Access Managemenet" select "App passwords" and click "Create app password"
+4. Add this password to your config file
+
+#### Prepare your repo to use Webhooks
+
+1. Settings -> Webhooks -> Add webhook
+2. Give it a title and enter the URl for where the web actor will recieve the webhook request
+3. Set the triggers.
+4. Triggers -> Choose from a full list of triggers
+5. Select all the checkboxes under "Pull Request" then click "Save"
 
 ### GitHub
 

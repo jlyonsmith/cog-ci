@@ -17,6 +17,25 @@ export class WebhookRoutes {
       .post("/bitbucket_hooks", catchAll(this.getWebhook))
   }
 
+  async notifySlack(text) {
+    this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
+      message: text,
+    })
+  }
+
+  async sendToScheduler(actorMethod, reqJSON) {
+    this.scheduleMQ.request(config.serviceName.schedule, actorMethod, {
+      build_id: reqJSON.pullrequest.id,
+      purpose: "pullRequest",
+      repoFullName: reqJSON.repository.full_name,
+      branch: reqJSON.pullrequest.source.branch.name,
+      pullRequest: reqJSON.pullrequest.id,
+      pullRequestTitle: reqJSON.pullrequest.title,
+      repoSHA: reqJSON.pullrequest.destination.commit.hash,
+      requestUser: reqJSON.actor.username,
+    })
+  }
+
   async getWebhook(req, res, next) {
     const BBCloudEvent = req.headers["x-event-key"]
     const BBCloudRequest = req.body
@@ -25,94 +44,49 @@ export class WebhookRoutes {
     const repo = BBCloudRequest.repository.full_name
     const link = BBCloudRequest.pullrequest.links.html.href
     const author = BBCloudRequest.pullrequest.author.display_name
+    let text = ""
     switch (BBCloudEvent) {
       case "pullrequest:created":
-        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
-          message: `${username} has created a Pull Request for the ${repo} repository. Link: ${link}`,
-        })
-        this.scheduleMQ.request(config.serviceName.schedule, "queueBuild", {
-          build_id: BBCloudRequest.pullrequest.id,
-          purpose: "pullRequest",
-          repoFullName: repo,
-          branch: BBCloudRequest.pullrequest.source.branch.name,
-          pullRequest: BBCloudRequest.pullrequest.id,
-          pullRequestTitle: BBCloudRequest.pullrequest.title,
-          repoSHA: BBCloudRequest.pullrequest.destination.commit.hash,
-          requestUser: username,
-        })
+        text = `${username} has created a Pull Request for the ${repo} repository. Link: ${link}`
+        await this.notifySlack(text)
+        await this.sendToScheduler("queueBuild", BBCloudRequest)
         break
       case "pullrequest:updated":
-        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
-          message: `${username} has updated a Pull Request to the ${repo} repository. Link: ${link}`,
-        })
-        this.scheduleMQ.request(config.serviceName.schedule, "queueBuild", {
-          build_id: BBCloudRequest.pullrequest.id,
-          purpose: "pullRequest",
-          repoFullName: repo,
-          branch: BBCloudRequest.pullrequest.source.branch.name,
-          pullRequest: BBCloudRequest.pullrequest.id,
-          pullRequestTitle: BBCloudRequest.pullrequest.title,
-          repoSHA: BBCloudRequest.pullrequest.destination.commit.hash,
-          requestUser: username,
-        })
+        text = `${username} has updated a Pull Request to the ${repo} repository. Link: ${link}`
+        await this.notifySlack(text)
+        await this.sendToScheduler("queueBuild", BBCloudRequest)
         break
       case "pullrequest:approved":
-        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
-          message: `:clap: The Pull Request to the ${repo} repository has been approved by ${username} :clap:. Link: ${link}`,
-        })
+        text = `:clap: The Pull Request to the ${repo} repository has been approved by ${username} :clap:. Link: ${link}`
+        await this.notifySlack(text)
         break
       case "pullrequest:unapproved":
-        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
-          message: `:man-raising-hand: Remember when ${username} approved your Pull Request? Well, they've changed their mind. The Pull Request to the ${repo} repository has been unapproved by ${username} :shrug:. Link: ${link}`,
-        })
+        text = `:man-raising-hand: Remember when ${username} approved your Pull Request? Well, they've changed their mind. The Pull Request to the ${repo} repository has been unapproved by ${username} :shrug:. Link: ${link}`
+        await this.notifySlack(text)
         break
       case "pullrequest:rejected":
-        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
-          message: `${username} has declined a Pull Request to the ${repo} repository. Great shame is heaped upon ${author}. Link: ${link}`,
-        })
+        text = `${username} has declined a Pull Request to the ${repo} repository. Great shame is heaped upon ${author}. Link: ${link}`
+        await this.notifySlack(text)
         // Notify the scheduler to remove this from the queue????
-        this.scheduleMQ.request(config.serviceName.schedule, "queueBuild", {
-          build_id: BBCloudRequest.pullrequest.id,
-          purpose: "pullRequest",
-          repoFullName: repo,
-          branch: BBCloudRequest.pullrequest.source.branch.name,
-          pullRequest: BBCloudRequest.pullrequest.id,
-          pullRequestTitle: BBCloudRequest.pullrequest.title,
-          repoSHA: BBCloudRequest.pullrequest.destination.commit.hash,
-          requestUser: username,
-        })
+        await this.sendToScheduler("stopBuild", BBCloudRequest)
         break
       case "pullrequest:fulfilled":
-        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
-          message: `:confetti_ball: The Pull Request has been fulfilled for the ${repo} repository. :tada:`,
-        })
-        this.scheduleMQ.request(config.serviceName.schedule, "queueBuild", {
-          build_id: BBCloudRequest.pullrequest.id,
-          purpose: "pullRequest",
-          repoFullName: repo,
-          branch: BBCloudRequest.pullrequest.source.branch.name,
-          pullRequest: BBCloudRequest.pullrequest.id,
-          pullRequestTitle: BBCloudRequest.pullrequest.title,
-          repoSHA: BBCloudRequest.pullrequest.destination.commit.hash,
-          requestUser: username,
-        })
+        text = `:confetti_ball: The Pull Request has been fulfilled for the ${repo} repository. :tada:`
+        await this.notifySlack(text)
         break
       case "pullrequest:comment_created":
-        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
-          message: `${username} has commented on the Pull Request for the ${repo} repository. Link: ${link}`,
-        })
+        text = `${username} has commented on the Pull Request for the ${repo} repository. Link: ${link}`
+        await this.notifySlack(text)
         break
       case "pullrequest:comment_updated":
-        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
-          message: `${username} has updated a comment for the Pull Request for the ${repo} repository. Link: ${link}`,
-        })
+        text = `${username} has updated a comment for the Pull Request for the ${repo} repository. Link: ${link}`
+        await this.notifySlack(text)
         break
       case "pullrequest:comment_deleted":
-        this.slackMQ.request(config.serviceName.slack, "notifyChannel", {
-          message: `${username} has deleted a comment for the Pull Request for the ${repo} repository. Why? What is ${
-            BBCloudRequest.actor.display_name
-          } hiding?`,
-        })
+        text = `${username} has deleted a comment for the Pull Request for the ${repo} repository. Why? What is ${
+          BBCloudRequest.actor.display_name
+        } hiding?`
+        await this.notifySlack(text)
         break
       default:
         break
