@@ -6,6 +6,7 @@ const bb = new Bitbucket()
 
 const regexOptions = {
   repoUser: /^.*?\brepo:\s+(.*)\b.*?/m,
+  repoBranch: /^.*?\brepo:\s+([a-zA-Z0-9\-_]+).*?\s+branch:\s+([a-zA-Z0-9\-_]+)()?\s+username:\s+([a-zA-Z0-9_\-]+)/m,
   repoUserTitleBranch: /^.*?\brepo:\s+(.*)\b.*?\s+\btitle:\s+(.*)\b.*?\s+\bbranch:\s+(.*)\b.*?/m,
 }
 
@@ -46,6 +47,31 @@ export class BitHandlers {
       username: username,
       _body: { title: title, source: { branch: { name: branch } } },
     })
+  }
+
+  // run a build
+  async runBuild(info) {
+    const botUser = info.user
+    const regArr = await this.sanitizeText(
+      botUser,
+      info.text,
+      regexOptions.repoBranch
+    )
+    const regObj = {
+      repo: regArr[1],
+      branch: regArr[2],
+    }
+    if (regArr.length > 2) {
+      regObj["username"] = regArr[4]
+    }
+    const { repo, branch, username } = regObj
+    this.log.info(
+      `bitHandlers runBuild args: ${JSON.stringify(
+        regObj,
+        null,
+        2
+      )} regArr: ${JSON.stringify(regArr, null, 2)}`
+    )
   }
 
   //In the event of a rollback, find the specific tag and pass that info to the scheduler/queuebuild

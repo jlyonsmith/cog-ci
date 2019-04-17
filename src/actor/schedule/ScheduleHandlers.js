@@ -24,6 +24,17 @@ export class ScheduleHandlers {
 
   // Public Methods ==================================
   /**
+   *
+   * @param {*} buildData
+   */
+  async processSlackMessage(message) {
+    this.log.info(
+      `Message received from slack: ${JSON.stringify(message, null, 2)}`
+    )
+    return { received: true }
+  }
+
+  /**
    * Add a new buid to the queue
    * @param {*} buildData
    */
