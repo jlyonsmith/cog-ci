@@ -5,9 +5,8 @@ import Bitbucket from "bitbucket"
 const bb = new Bitbucket()
 
 const regexOptions = {
-  repoUser: /^.*?\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\b.*?/m,
-  repoUserTitleBranch: /^.*?\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\b.*?\s+\btitle:\s+(.*)\b.*?\s+\bbranch:\s+(.*)\b.*?/m,
-  repoUserTag: /^.*?\brepo:\s+(.*)\b.*?\s+\busername:\s+(.*)\btag:\s+(.*)\b.*?/m,
+  repoUser: /^.*?\brepo:\s+(.*)\b.*?/m,
+  repoUserTitleBranch: /^.*?\brepo:\s+(.*)\b.*?\s+\btitle:\s+(.*)\b.*?\s+\bbranch:\s+(.*)\b.*?/m,
 }
 
 @autobind
@@ -36,9 +35,9 @@ export class BitHandlers {
     )
     const regObj = {
       repo: regArr[1],
-      username: regArr[2],
-      title: regArr[3],
-      branch: regArr[4],
+      username: config.bit.username,
+      title: regArr[2],
+      branch: regArr[3],
     }
     const { repo, username, title, branch } = regObj
     this.bitbucketAuth()
@@ -55,19 +54,19 @@ export class BitHandlers {
     const regArr = await this.sanitizeText(
       botUser,
       info.text,
-      regexOptions.repoUserTag
+      regexOptions.repoUser
     )
     const regObj = {
       repo_slug: regArr[1],
-      username: regArr[2],
-      name: regArr[3],
+      username: config.bit.username,
+      name: regArr[2],
     }
     const repoInfo = await this.getTag(regObj)
     //more likely, this would be sent to a deployment method, not the queue
     this.scheduleMQ.request(config.serviceName.schedule, "queueBuild", {
       build_id: repoInfo.name,
       purpose: "rollback",
-      repoFullName: repo.target.repository.full_name,
+      repoFullName: repoInfo.target.repository.full_name,
       repoSHA: repoInfo.target.hash,
     })
   }
@@ -82,7 +81,7 @@ export class BitHandlers {
     )
     const regObj = {
       repo: regArr[1],
-      username: regArr[2],
+      username: config.bit.username,
     }
     const { repo, username } = regObj
     this.bitbucketAuth()
@@ -117,7 +116,7 @@ export class BitHandlers {
     this.bitbucketAuth()
     let reviewers = await this.userLookup(info.team, info.individual)
     await bb.repositories.updatePullRequest({
-      username: info.username,
+      username: config.bit.username,
       repo_slug: info.repo,
       pull_request_id: info.pr_id,
       _body: {
@@ -131,7 +130,7 @@ export class BitHandlers {
   async listTags(info) {
     this.bitbucketAuth()
     const { data } = await bb.repositories.listTags({
-      username: info.username, //username or UUID
+      username: config.bit.username, //username or UUID
       repo_slug: info.repo_slug, //repo
     })
     return data.values
@@ -141,7 +140,7 @@ export class BitHandlers {
   async getTag(info) {
     this.bitbucketAuth()
     const { data } = await bb.repositories.getTag({
-      username: info.username, //username or UUID
+      username: config.bit.username, //username or UUID
       repo_slug: info.repo_slug, //repo
       name: info.name, //this is the tag name
     })
@@ -153,7 +152,7 @@ export class BitHandlers {
     const { username, sha, repo } = info
     this.bitbucketAuth()
     const { data, headers } = await bb.commits.get({
-      username: username,
+      username: config.bit.username,
       node: sha,
       repo_slug: repo,
     })
@@ -164,7 +163,7 @@ export class BitHandlers {
     const { username, sha, repo } = info
     this.bitbucketAuth()
     const { data, headers } = await bb.commitstatuses.list({
-      username: username,
+      username: config.bit.username,
       node: sha,
       repo_slug: repo,
     })
@@ -173,7 +172,6 @@ export class BitHandlers {
 
   async setBuildStatus(info) {
     const {
-      username,
       sha,
       repo,
       state,
@@ -187,7 +185,7 @@ export class BitHandlers {
     const { data, headers } = await bb.commitstatuses
       .createBuildStatus({
         repo_slug: repo,
-        username: username,
+        username: config.bit.username,
         node: sha,
         _body: {
           type: "commit",
