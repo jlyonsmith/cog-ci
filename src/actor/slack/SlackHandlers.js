@@ -429,7 +429,7 @@ export class SlackHandlers {
       const cleanText = message.text.replace(`<@${botUserId}>`, "").trim() // if a user addresses/tags @Cog-Ci, we don't want to parse that in our regex handling
       if (currentHandler.regexp.test(cleanText)) {
         hasHandler = true
-        currentHandler.func(message, userString)
+        currentHandler.func(message)
         // optional "break" here (or check hasHandler === true) if we only ever want a single match in the handlers regex
       }
     }
@@ -451,12 +451,12 @@ export class SlackHandlers {
       this.postMessage(payload)
     } else {
       // message was successfully handled
-      this.log.info("It's not a hamster!")
-      this.mq.request(
-        config.serviceName.schedule,
-        "slackMessageReceived",
-        message
-      )
+      this.log.info("Message was handled successfully!")
+      // this.mq.request(
+      //   config.serviceName.schedule,
+      //   "processSlackMessage",
+      //   message
+      // )
     }
   }
 
@@ -554,14 +554,17 @@ export class SlackHandlers {
     return {}
   }
 
-  handleTest(slackMessage, userString) {
+  handleTest(message) {
+    const userString = `<@${message.user}>`
     const payload = {
       text: `:ghostbusters: Test triggered by ${userString}`,
     }
     this.postMessage(payload)
   }
 
-  handleHelp(slackMessage, userString) {
+  handleHelp(message) {
+    const userString = `<@${message.user}>`
+
     let messageResponse = `Here is a list of expected commands for the Cog-CI SlackBot:\n`
     const alphabetizedHandlers = this.handlers.sort((a, b) => {
       return a.name.localeCompare(b.name)
@@ -578,7 +581,9 @@ export class SlackHandlers {
     this.postMessage(payload)
   }
 
-  async handleStopBuild(slackMessage, userString) {
+  async handleStopBuild(message) {
+    const userString = `<@${message.user}>`
+
     const payload = {
       text: `:ghostbusters: Build stopped by ${userString}`,
     }
@@ -586,7 +591,9 @@ export class SlackHandlers {
     // this.doStop(slackResponse[1], isFromChannel, sendingUserName),
   }
 
-  async handleRollback(slackMessage, userString) {
+  async handleRollback(message) {
+    const userString = `<@${message.user}>`
+
     const params = ["repo", "username", "tag"]
     let errors = []
     for (let param in params) {
@@ -638,35 +645,45 @@ export class SlackHandlers {
     return {}
   }
 
-  async handleShowStatus(slackMessage, userString) {
+  async handleShowStatus(message) {
+    const userString = `<@${message.user}>`
+
     const payload = {
       text: `:shell: Status update requested by ${userString}`,
     }
     this.postMessage(payload)
   }
 
-  async handleShowBuilds(slackMessage, userString) {
+  async handleShowBuilds(message) {
+    const userString = `<@${message.user}>`
+
     const payload = {
       text: `:page_with_curl: List of builds requested by ${userString}`,
     }
     this.postMessage(payload)
   }
 
-  async handleShowReport(slackMessage, userString) {
+  async handleShowReport(message) {
+    const userString = `<@${message.user}>`
+
     const payload = {
       text: `:scroll: Report requested by ${userString}`,
     }
     this.postMessage(payload)
   }
 
-  async handleShowQueue(slackMessage, userString) {
+  async handleShowQueue(message) {
+    const userString = `<@${message.user}>`
+
     const payload = {
       text: `:showmewhatyougot: Queue requested by ${userString}`,
     }
     this.postMessage(payload)
   }
 
-  async handleRelay(slackMessage, userString) {
+  async handleRelay(message) {
+    const userString = `<@${message.user}>`
+
     const payload = {
       text: `:zap: Bitbucket Relay Requested by ${userString}`,
     }
