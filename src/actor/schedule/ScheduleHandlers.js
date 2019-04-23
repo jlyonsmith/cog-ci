@@ -24,6 +24,17 @@ export class ScheduleHandlers {
 
   // Public Methods ==================================
   /**
+   *
+   * @param {*} buildData
+   */
+  async processSlackMessage(message) {
+    this.log.info(
+      `Message received from slack: ${JSON.stringify(message, null, 2)}`
+    )
+    return { received: true }
+  }
+
+  /**
    * Add a new buid to the queue
    * @param {*} buildData
    */
@@ -195,21 +206,18 @@ export class ScheduleHandlers {
     let update = {}
     if (resultData.success) {
       update = {
-        startTime: now,
+        stopTime: now,
         status: "success",
+        resultMessage: resultData.message,
       }
     } else {
       update = {
-        startTime: now,
+        stopTime: now,
         status: "fail",
+        resultMessage: resultData.message,
       }
     }
     const updated = await this._updateBuildRequest(buildId, update)
-    return {}
-  }
-
-  async slackMessageReceived(message) {
-    console.log("**************** MESSEGE RECEIVED BY SCHEDULER", message)
     return {}
   }
 
