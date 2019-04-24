@@ -26,7 +26,7 @@
     pullRequestChannel: "dev-bots",
   },
   integration: {
-    rootPath: "/Users/bengoldstein/projects/cog-ci",
+    rootPath: "/Users/breannaanderson/cog-ci-root",
     templateDir: "template",
     repoHost: "git@bitbucket.org",
   },
