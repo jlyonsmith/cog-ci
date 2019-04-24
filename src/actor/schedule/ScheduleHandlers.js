@@ -79,7 +79,7 @@ export class ScheduleHandlers {
   }
 
   async getBuildDaemonStatus() {
-    const queueLengthData = await this.getQueueLength("queued")
+    const queueLengthData = await this.getQueueLength({ status: "queued" })
     const queueLength = queueLengthData.data.count
     const result = {
       daemonStatus: this.daemonStatus,
