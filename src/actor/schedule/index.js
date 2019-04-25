@@ -19,6 +19,7 @@ class ScheduleActor {
         config.serviceName.integration,
         container
       )
+      container.bitMQ = new MQ(config.serviceName.bit, container)
       const uri = await config.get("uri")
 
       await Promise.all([
@@ -26,6 +27,7 @@ class ScheduleActor {
         ms.connect(uri.amqp),
         mq.connect(uri.amqp),
         container.integrationMQ.connect(uri.amqp),
+        container.bitMQ.connect(uri.amqp),
       ])
 
       log.info(`Connected to MongoDB at ${uri.mongo}`)

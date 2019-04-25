@@ -16,6 +16,7 @@ export class ScheduleHandlers {
     this.runningBuildId = null
     this.integrationMQ = container.integrationMQ
     this.integrationExchange = config.get("serviceName.integration")
+    this.bitMQ = container.bitMQ
   }
 
   async init() {
@@ -207,17 +208,25 @@ export class ScheduleHandlers {
     if (resultData.success) {
       update = {
         stopTime: now,
-        status: "success",
+        status: "SUCCESSFUL",
         resultMessage: resultData.message,
       }
     } else {
       update = {
         stopTime: now,
-        status: "fail",
+        status: "FAILED",
         resultMessage: resultData.message,
       }
     }
     const updated = await this._updateBuildRequest(buildId, update)
+    const completedBuildItem = await this.db.BuildRequest.find({
+      buildId: buildId,
+    })
+    this.bitMQ.request(config.serviceName.bit, "setBuildStatus", {
+      ...completedBuildItem[0]._doc,
+      buildID: buildId,
+      url: config.url,
+    })
     return {}
   }
 
