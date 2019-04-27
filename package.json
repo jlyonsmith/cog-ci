@@ -51,6 +51,7 @@
     "cors": "^2.8.5",
     "eventemitter3": "^3.1.0",
     "express": "^4.16.4",
+    "fast-levenshtein": "^2.0.6",
     "flat": "^4.1.0",
     "fs-extra": "^7.0.1",
     "http-errors": "^1.7.1",
@@ -59,6 +60,7 @@
     "mongoose-doc-merge": "^1.0.1",
     "pino": "^5.11.1",
     "pino-pretty-express": "^1.0.4",
+    "recursive-descent": "^0.1.2",
     "redis": "^2.8.0",
     "tmp-promise": "^1.0.5",
     "uuid": "^3.3.2"
@@ -72,7 +74,7 @@
     "@babel/plugin-proposal-optional-chaining": "^7.2.0",
     "@babel/plugin-syntax-object-rest-spread": "^7.2.0",
     "@babel/preset-env": "^7.3.1",
-    "jest-cli": "^24.1.0",
+    "jest-cli": "^24.7.1",
     "monzilla": "^1.1.1"
   }
 }

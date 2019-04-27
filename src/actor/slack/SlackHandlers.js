@@ -1,6 +1,8 @@
 import autobind from "autobind-decorator"
 // import { timingSafeEqual } from "crypto"
 import config from "config"
+import { SlackParser } from "./slackParser"
+import { defaultCipherList } from "constants"
 
 @autobind
 export class SlackHandlers {
@@ -12,6 +14,7 @@ export class SlackHandlers {
     this.web = container.web
     this.mq = container.mq
     this.bitMQ = container.bitMQ
+    this.slackParser = new SlackParser(container)
 
     this.rtm.on("connected", this.onConnected)
     this.rtm.on("disconnected", () => {
@@ -21,6 +24,7 @@ export class SlackHandlers {
     this.rtm.start()
 
     this.botChannelId = "GHLMQCMPH"
+    this.userIdToUserMap = new Map()
   }
 
   async onConnected() {
@@ -95,9 +99,11 @@ export class SlackHandlers {
 
   async onMessage(message) {
     const isUserMessage = message.subtype === undefined
-    const isBotMessage = message.subtype && message.subtype !== "bot_message"
+    const isBotMessage = message.subtype && message.subtype == "bot_message"
+    const isReplyMessage =
+      message.subtype && message.subtype == "message_replied"
 
-    console.log("I GOT A MESSAGE", message)
+    this.log.info(`I GOT A MESSAGE: ${JSON.stringify(message, null, 2)} `)
 
     // Only respoond to messages from users or bots
     if (!isUserMessage && !isBotMessage) {
@@ -122,7 +128,7 @@ export class SlackHandlers {
     const sendingUserName = this.userIdToUserMap.get(sendingUserId)
 
     if (!sendingUserName) {
-      this.log.warning(
+      this.log.warn(
         `Unable to identify name of user ${sendingUserId} to process a message`
       )
       return
@@ -135,6 +141,9 @@ export class SlackHandlers {
     if (isFromChannel && !text.match(new RegExp("<@" + botUserId + ">"))) {
       return
     }
+
+    const command = this.slackParser.parseCommand(text, ["#", "A"])
+    this.log.info(`Command: ${JSON.stringify(command, null, 2)}`)
 
     const userString = `<@${message.user}>`
 
@@ -175,57 +184,6 @@ export class SlackHandlers {
         name: "pull-request | pr | create pr | create pull request",
         regexp: /^(pull-request|pr|create pr|create pull request)/i,
         func: this.handlePullRequest,
-        // func: async (slackResponse) => {
-        //   const params = ["repo", "username", "title", "branch"]
-        //   let errors = []
-        //   for (let param in params) {
-        //     const currentParam = params[param]
-        //     if (slackResponse.text.indexOf(currentParam + ":") === -1) {
-        //       errors.push(currentParam)
-        //     }
-        //   }
-        //   if (errors.length > 0) {
-        //     // message user about errors / missing keys
-
-        //     let messageResponse = `The following ${
-        //       errors.length === 1 ? "key is" : "keys are"
-        //     } missing from the request: `
-        //     for (const error in errors) {
-        //       messageResponse += `\`${errors[error]}\` `
-        //     }
-        //     messageResponse += `\nExample Usage:\n\`pull-request repo: testRepo username: bpt-build title: newPRTitle branch: beta\``
-        //     this.postMessage({
-        //       text: messageResponse,
-        //       channel: message.channel,
-        //       thread_ts: message.ts,
-        //       // as_user: false,
-        //       // icon_emoji: ":x:",
-        //     })
-        //   } else {
-        //     // TODO: call to schedule actor to create build
-        //     // wait on reply
-        //     // notify channel of build status
-        //     let payload = {
-        //       text: `:shell: Pull Request made by ${userString}`,
-        //     }
-        //     this.postMessage(payload)
-        //     try {
-        //       const reply = await this.bitMQ.requestAndReply(
-        //         config.serviceName.bit,
-        //         "createPullRequest",
-        //         slackResponse
-        //       )
-        //     } catch (err) {
-        //       const errPayload = {
-        //         text: `:sos: Error completing Pull Request made by ${userString}. Details: \`${
-        //           err.message
-        //         }\``,
-        //       }
-        //       this.postMessage(errPayload)
-        //     }
-        //   }
-        //   return {}
-        // },
       },
       {
         name: "show builds | show last [0-9] builds",
@@ -405,6 +363,7 @@ export class SlackHandlers {
   // Command Handlers ========================================================
 
   async handlePullRequest(message) {
+    this.log.info(`handlePullRequest: ${JSON.stringify(message, null, 2)}`)
     const userString = `<@${message.user}>`
 
     const params = ["repo", "title", "branch"]
