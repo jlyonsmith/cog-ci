@@ -9,7 +9,8 @@ export class ServerTool {
   constructor(toolName, log) {
     this.toolName = toolName
     this.log = log
-    this.actors = config.get("actors")
+    // Object we get from config is immutable, so clone it
+    this.actors = JSON.parse(JSON.stringify(config.get("actors")))
   }
 
   restart(actor) {
