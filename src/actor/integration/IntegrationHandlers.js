@@ -40,8 +40,8 @@ export class IntegrationHandlers {
       this._runProcess(dirCreated.path, request)
       this.log.info("Process Started")
     } else {
-      response[success] = false
-      response[message] = dirCreated.message
+      response.success = false
+      response.message = dirCreated.message
     }
     return response
   }
@@ -93,7 +93,26 @@ export class IntegrationHandlers {
       `Creating working directory. Template: ${templatePath}  Working: ${workingPath}`
     )
     try {
-      await fsx.copy(templatePath, workingPath)
+      await fsx
+        .ensureDir(templatePath)
+        .catch((err) => console.log("!error", err))
+      await fsx
+        .copy(templatePath, workingPath)
+        .then(() => {
+          fs.chmod(
+            workingPath + "/" + request.purpose + ".sh",
+            0o777,
+            (err) => {
+              if (err) {
+                console.log(err)
+              } else {
+                return false
+              }
+            }
+          )
+        })
+        .catch((err) => console.log("!error", err))
+
       this.log.info(`Working directory created`)
       return { success: true, message: "success", path: workingPath }
     } catch (ex) {

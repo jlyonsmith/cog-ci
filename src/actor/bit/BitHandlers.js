@@ -198,36 +198,34 @@ export class BitHandlers {
 
   async setBuildStatus(info) {
     const {
-      sha,
-      repo,
-      state,
-      name,
-      description,
-      created_on,
-      updated_on,
+      repoSHA,
+      repoFullName,
+      status,
+      createdAt,
+      updatedAt,
+      buildID,
       url,
     } = info
+    const repoSlug = repoFullName.split("/")
     this.bitbucketAuth()
-    const { data, headers } = await bb.commitstatuses
+    await bb.commitstatuses
       .createBuildStatus({
-        repo_slug: repo,
+        repo_slug: repoSlug[1],
         username: config.bit.username,
-        node: sha,
+        node: repoSHA,
         _body: {
           type: "commit",
           key: "build",
-          state: state,
-          name: name,
-          description: description,
-          created_on: created_on,
-          updated_on: updated_on,
+          state: status,
+          name: buildID,
+          created_on: createdAt,
+          updated_on: updatedAt,
           url: url,
         },
       })
       .catch((err) => {
         console.log(err)
       })
-    return data
   }
 
   sanitizeText(bot, text, regexStr) {
