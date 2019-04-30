@@ -121,6 +121,16 @@ export class IntegrationHandlers {
     }
   }
 
+  async _removeDirectory(request) {
+    const workingDir = `${request.purpose}-${request.buildId}`
+    const workingPath = path.join(this.rootPath, workingDir)
+    try {
+      await fsx.remove(workingPath)
+    } catch (err) {
+      console.log("error: ", err)
+    }
+  }
+
   async _runProcess(directory, request) {
     const repoFullName = request.repoFullName
     const [repoOwner, repoName] = repoFullName.split("/")
@@ -183,6 +193,7 @@ export class IntegrationHandlers {
           "onBuildComplete",
           result
         )
+        this._removeDirectory(request)
       }
     )
     this.processStatus = "running"

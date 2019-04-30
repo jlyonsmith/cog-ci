@@ -38,12 +38,12 @@ export class WebhookRoutes {
 
   async getWebhook(req, res, next) {
     const BBCloudEvent = req.headers["x-event-key"]
-    const BBCloudRequest = req.body
-    res.json({ success: true })
+    const BBCloudRequest = await req.body
     const username = BBCloudRequest.actor.username
     const repo = BBCloudRequest.repository.full_name
-    const link = BBCloudRequest.pullrequest.links.html.href
-    const author = BBCloudRequest.pullrequest.author.display_name
+    const link = BBCloudRequest.repository.links.html.href
+    const author = BBCloudRequest.actor.display_name
+    res.json({ success: true })
     let text = ""
     switch (BBCloudEvent) {
       case "pullrequest:created":
