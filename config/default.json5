@@ -3,7 +3,6 @@
   actors: [
     { name: "web" },
     { name: "integration" },
-    { name: "git" },
     { name: "bit" },
     { name: "schedule" },
     { name: "slack" },
@@ -13,7 +12,6 @@
     server: "cog-server",
     web: "cog-web",
     integration: "cog-integration",
-    git: "cog-git",
     bit: "cog-bit",
     schedule: "cog-schedule",
     slack: "cog-slack",
