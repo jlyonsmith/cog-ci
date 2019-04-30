@@ -17,11 +17,11 @@ export class SlackParser {
     let ast
     try {
       ast = rdparser.parse(this.slackParserRules, message)
-      rdparser.print(ast)
+      // rdparser.print(ast)
       ast = this.normalizeAST(ast)
-      this.log.info(JSON.stringify(ast, null, 2))
+      // this.log.info(JSON.stringify(ast, null, 2))
     } catch (ex) {
-      this.log.warn(`command not recognized: ${message}`)
+      //this.log.warn(`command not recognized: ${message}`)
     }
 
     return ast
@@ -32,7 +32,7 @@ export class SlackParser {
     let response = { parsed: false }
     const ast = this.parseMessage(message)
     if (ast) {
-      let command = { command: ast.type }
+      let command = { name: ast.type }
       if (argSpec.length > 0 && argSpec[0] == "#") {
         command.number = this.parseNumber(ast)
       }

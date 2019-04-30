@@ -125,9 +125,9 @@ export class SlackHandlers {
       return
     }
 
-    const sendingUserName = this.userIdToUserMap.get(sendingUserId)
+    const sendingUser = this.userIdToUserMap.get(sendingUserId)
 
-    if (!sendingUserName) {
+    if (!sendingUser) {
       this.log.warn(
         `Unable to identify name of user ${sendingUserId} to process a message`
       )
@@ -142,227 +142,318 @@ export class SlackHandlers {
       return
     }
 
-    const command = this.slackParser.parseCommand(text, ["#", "A"])
-    this.log.info(`Command: ${JSON.stringify(command, null, 2)}`)
-
     const userString = `<@${message.user}>`
 
-    // test-bot channel id :: GHLMQCMPH
-    const handlers = [
-      {
-        name: "stop build",
-        regexp: /^stop +build +(bb-\d+)/i,
-        func: (slackResponse) =>
-          this.doStop(slackResponse[1], isFromChannel, sendingUserName),
-      },
-      {
-        name: "test",
-        regexp: /^test/i,
-        func: (slackResponse) => {
-          const payload = {
-            text: `:ghostbusters: Test triggered by ${userString}`,
-          }
-          this.postMessage(payload)
-        },
-      },
-      {
-        name: "build",
-        regexp: /^build+([a-z0-9, \.]+)/i,
-        func: this.handleBuild,
-      },
-      {
-        name: "status | show status",
-        regexp: /^(?:show +)?status/,
-        func: (slackResponse) => {
-          const payload = {
-            text: `:shell: Status update requested by ${userString}`,
-          }
-          this.postMessage(payload)
-        },
-      },
-      {
-        name: "pull-request | pr | create pr | create pull request",
-        regexp: /^(pull-request|pr|create pr|create pull request)/i,
-        func: this.handlePullRequest,
-      },
-      {
-        name: "show builds | show last [0-9] builds",
-        regexp: /^show +(?:last +([0-9]+) +)?builds/i,
-        func: (slackResponse) => {
-          const payload = {
-            text: `:page_with_curl: List of builds requested by ${userString}`,
-          }
-          this.postMessage(payload)
-        },
-      },
-      {
-        name: "show report",
-        regexp: /^show report/i,
-        func: (slackResponse) => {
-          const payload = {
-            text: `:scroll: Report requested by ${userString}`,
-          }
-          this.postMessage(payload)
-        },
-      },
-      {
-        name: "show queue",
-        regexp: /^show queue/i,
-        func: (slackResponse) => {
-          const payload = {
-            text: `:showmewhatyougot: Queue requested by ${userString}`,
-          }
-          this.postMessage(payload)
-        },
-      },
-      {
-        name: "help",
-        regexp: /^help/i,
-        func: (slackResponse) => {
-          let messageResponse = `Here is a list of expected commands for the Cog-CI SlackBot:\n`
-          const alphabetizedHandlers = handlers.sort((a, b) => {
-            return a.name.localeCompare(b.name)
-          })
-          for (const handler in alphabetizedHandlers) {
-            const currentHandler = handlers[handler]
-            messageResponse += `\`${currentHandler.name}\`\n`
-          }
-          const payload = {
-            channel: message.channel,
-            text: `:sos: ${messageResponse}`,
-            thread_ts: message.ts,
-          }
-          this.postMessage(payload)
-        },
-      },
-      {
-        name: "relay",
-        regexp: /^relay(.*)/i,
-        func: (slackResponse) => {
-          const payload = {
-            text: `:zap: Bitbucket Relay Requested by ${userString}`,
-          }
-          this.postMessage(payload)
-        },
-      },
-      {
-        name: "rollback",
-        regexp: /^rollback/i,
-        func: async (slackResponse) => {
-          const params = ["repo", "tag"]
-          let errors = []
-          for (let param in params) {
-            const currentParam = params[param]
-            if (slackResponse.text.indexOf(currentParam + ":") === -1) {
-              errors.push(currentParam)
-            }
-          }
-          if (errors.length > 0) {
-            // message user about errors / missing keys
+    const parseResult = this.slackParser.parseCommand(text, ["#", "A"])
+    this.log.info(`Command: ${JSON.stringify(parseResult, null, 2)}`)
 
-            let messageResponse = `The following ${
-              errors.length === 1 ? "key is" : "keys are"
-            } missing from the request: `
-            for (const error in errors) {
-              messageResponse += `\`${errors[error]}\` `
-            }
-            messageResponse += `\nExample Usage:\n\`rollback repo: testRepo tag: testTag\``
-            this.postMessage({
-              text: messageResponse,
-              channel: message.channel,
-              thread_ts: message.ts,
-              // as_user: false,
-              // icon_emoji: ":x:",
+    if (parseResult.parsed) {
+      const handlers = this.getCommandHandlers()
+      const command = parseResult.command
+      const handler = handlers[command.name]
+      if (handler) {
+        // TODO: process and check arguments
+        const parameters = this.parseArguments(command, handler, message)
+        if (parameters)
+          try {
+            const handledOk = await handler.func({
+              message,
+              command,
+              sendingUserId,
+              sendingUser,
+              isFromChannel,
             })
-          } else {
-            // TODO: call to schedule actor to create build
-            // wait on reply
-            // notify channel of build status
-            let payload = {
-              text: `:shell: Rollback initiated by ${userString}`,
+            if (handledOk) {
+              this.log.info("Message handled.")
+            } else {
+              this.log.error(`Error handling message`)
             }
-            this.postMessage(payload)
-            try {
-              const reply = await this.bitMQ.requestAndReply(
-                config.serviceName.bit,
-                "rollBackPreviousBuild",
-                slackResponse
-              )
-            } catch (err) {
-              const errPayload = {
-                text: `:sos: Error completing Rollback made by ${userString}. Details: \`${
-                  err.message
-                }\``,
-              }
-              this.postMessage(errPayload)
-            }
+          } catch (ex) {
+            this.log.error(`Exception handling message: ${ex.message}`)
           }
-          return {}
-        },
-      },
-
-      // when /build +([a-z0-9, \.]+)/i
-      //   do_build $1, is_from_slack_channel, slack_user_name
-      // when /(?:show +)?status/
-      //   do_show_status
-      // when /show +(?:last +([0-9]+) +)?builds/
-      //   limit = $1.to_i unless $1.nil?
-      //   if limit.nil? or limit < 5
-      //     limit = 5
-      //   end
-      //   do_show_builds limit
-      // when /show report/
-      //   do_show_report
-      // when /show queue/
-      //   do_show_queue
-      // when /help/i
-      //   do_show_help is_from_slack_channel, slack_user_name
-      // when /^relay(.*)/i # This must be sent directly to build-buddy
-      //   do_relay $1, slack_user_name
-      // else
-      //   "Sorry#{is_from_slack_channel ? ' ' + slack_user_name : ''}, I'm not sure how to respond."
-      //              end
-    ]
-    let hasHandler = false
-    for (const handler in handlers) {
-      const currentHandler = handlers[handler]
-      const cleanText = message.text.replace(`<@${botUserId}>`, "").trim() // if a user addresses/tags @Cog-Ci, we don't want to parse that in our regex handling
-      if (currentHandler.regexp.test(cleanText)) {
-        hasHandler = true
-        currentHandler.func(message)
-        // optional "break" here (or check hasHandler) if we only ever want a single match in the handlers regex
+      } else {
+        this.log.error(`A handler was not found for command: ${command.name}`)
       }
-    }
-
-    // respond if message is unhandled
-    if (!hasHandler) {
+    } else {
+      // command not recognized.  Look for proximate suggestions.
       const commandWord =
         message.text?.split(" ")[0] === `<@${botUserId}>`
           ? message.text?.split(" ")[1]
           : message.text?.split(" ")[0]
-      const payload = {
-        channel: message.channel,
-        text: `:poopfire: Command \`${commandWord}\` not recognized by COG. Do better, <@${
-          message.user
-        }>.`,
-        thread_ts: message.ts,
-      }
-      console.log("****** USER HAS SUBMITTED AN UN-HANDLEABLE MESSAGE", message)
-      this.postMessage(payload)
-    } else {
-      // message was successfully handled
-      this.log.info("It's not a hamster!")
-      this.mq.request(
-        config.serviceName.schedule,
-        "slackMessageReceived",
+
+      this.log.warn(
+        "****** USER HAS SUBMITTED AN UN-HANDLEABLE MESSAGE",
         message
       )
+      const reply = `:poopfire: Command \`${commandWord}\` not recognized by COG. Do better, <@${
+        message.user
+      }>.`
+      this.replyToChannel(reply, message)
     }
+  }
+
+  /**
+   * Send reply text to channel.
+   * @param {*} text
+   * @param {*} message
+   */
+  replyToChannel(text, message) {
+    const payload = {
+      text,
+      channel: message.channel,
+      thread_ts: message.ts,
+    }
+
+    this.postMessage(payload)
+  }
+
+  /**
+   * Return map of commands, metadata and handling function.
+   */
+  getCommandHandlers() {
+    // test-bot channel id :: GHLMQCMPH
+    const handlers = {
+      stopBuildCommand: {
+        command: "stopBuildCommand",
+        name: "stop build",
+        description: "stop a running build or remove from queue",
+        example: "stop build 27",
+        arguments: ["#"],
+        func: this.doStopBuild,
+        //regexp: /^stop +build +(bb-\d+)/i,
+        // func: (slackResponse) =>
+        //   this.doStop(slackResponse[1], isFromChannel, sendingUser),
+      },
+      testCommand: {
+        command: "testCommand",
+        name: "test",
+        description: "Test the Slack Agent",
+        example: "test",
+        arguments: [],
+        func: this.doTest,
+        // regexp: /^test/i,
+        // func: (slackResponse) => {
+        //   const payload = {
+        //     text: `:ghostbusters: Test triggered by ${userString}`,
+        //   }
+        //   this.postMessage(payload)
+        // },
+      },
+      startBuildCommand: {
+        command: "startBuildCommand",
+        name: "build",
+        description: "queue the build of a repository/branch",
+        example: "build repo: myrepo branch: newbranch1 username: itsMe",
+        arguments: ["repo!", "branch!", "userName"],
+        func: this.doStartBuild,
+        // regexp: /^build+([a-z0-9, \.]+)/i,
+      },
+      statusCommand: {
+        commane: "statusCommand",
+        name: "show status",
+        description: "Show the status of the system",
+        example: "show status",
+        arguments: [],
+        func: this.doShowStatus,
+        // func: (slackResponse) => {
+        //   const payload = {
+        //     text: `:shell: Status update requested by ${userString}`,
+        //   }
+        //   this.postMessage(payload)
+        // },
+        // regexp: /^(?:show +)?status/,
+      },
+      createPullRequestCommand: {
+        command: "createPullRequestCommand",
+        name: "create pull-request",
+        description:
+          "create a new pull request on a repo and start pr build/test",
+        example:
+          "create pr repo:coolRepo branch: newBranch, title: 'a long title with spaces' ",
+        arguments: ["repo!", "branch!", "title!"],
+        func: this.doCreatePullRequest,
+
+        //regexp: /^(pull-request|pr|create pr|create pull request)/i,
+      },
+      showBuildCommand: {
+        command: "showBuildsCommand",
+        arguments: ["#", "status"],
+        name: "show builds",
+        description: "show the last n builds with optional filtering",
+        example: "show builds 10",
+        func: this.doShowBuilds,
+        // regexp: /^show +(?:last +([0-9]+) +)?builds/i,
+        // func: (slackResponse) => {
+        //   const payload = {
+        //     text: `:page_with_curl: List of builds requested by ${userString}`,
+        //   }
+        //   this.postMessage(payload)
+        // },
+      },
+      showReportCommand: {
+        command: "showReportCommand",
+        arguments: [],
+        name: "show report",
+        description: "show a report of stuff",
+        example: "show report",
+        func: this.doShowReport,
+        // regexp: /^show report/i,
+        // func: (slackResponse) => {
+        //   const payload = {
+        //     text: `:scroll: Report requested by ${userString}`,
+        //   }
+        //   this.postMessage(payload)
+        // },
+      },
+      showQueueCommand: {
+        command: "showQueueCommand",
+        arguments: ["#", "status"],
+        name: "show queue",
+        description: "show the queue backlog",
+        example: "show queue",
+        func: this.doShowQueue,
+        // regexp: /^show queue/i,
+        // func: (slackResponse) => {
+        //   const payload = {
+        //     text: `:showmewhatyougot: Queue requested by ${userString}`,
+        //   }
+        //   this.postMessage(payload)
+        // },
+      },
+      helpCommand: {
+        command: "helpCommand",
+        name: "help",
+        description: "get Cog-Ci slack command help",
+        example: "help build",
+        arguments: ["command"],
+        func: this.doHelp,
+        // regexp: /^help/i,
+        // func: (slackResponse) => {
+        //   let messageResponse = `Here is a list of expected commands for the Cog-CI SlackBot:\n`
+        //   const alphabetizedHandlers = handlers.sort((a, b) => {
+        //     return a.name.localeCompare(b.name)
+        //   })
+        //   for (const handler in alphabetizedHandlers) {
+        //     const currentHandler = handlers[handler]
+        //     messageResponse += `\`${currentHandler.name}\`\n`
+        //   }
+        //   const payload = {
+        //     channel: message.channel,
+        //     text: `:sos: ${messageResponse}`,
+        //     thread_ts: message.ts,
+        //   }
+        //   this.postMessage(payload)
+        // },
+      },
+      // {
+      //   name: "relay",
+      //   regexp: /^relay(.*)/i,
+      //   func: (slackResponse) => {
+      //     const payload = {
+      //       text: `:zap: Bitbucket Relay Requested by ${userString}`,
+      //     }
+      //     this.postMessage(payload)
+      //   },
+      // },
+      // {
+      //   name: "rollback",
+      //   regexp: /^rollback/i,
+      //   func: async (slackResponse) => {
+      //     const params = ["repo", "tag"]
+      //     let errors = []
+      //     for (let param in params) {
+      //       const currentParam = params[param]
+      //       if (slackResponse.text.indexOf(currentParam + ":") === -1) {
+      //         errors.push(currentParam)
+      //       }
+      //     }
+      //     if (errors.length > 0) {
+      //       // message user about errors / missing keys
+
+      //       let messageResponse = `The following ${
+      //         errors.length === 1 ? "key is" : "keys are"
+      //       } missing from the request: `
+      //       for (const error in errors) {
+      //         messageResponse += `\`${errors[error]}\` `
+      //       }
+      //       messageResponse += `\nExample Usage:\n\`rollback repo: testRepo tag: testTag\``
+      //       this.postMessage({
+      //         text: messageResponse,
+      //         channel: message.channel,
+      //         thread_ts: message.ts,
+      //         // as_user: false,
+      //         // icon_emoji: ":x:",
+      //       })
+      //     } else {
+      //       // TODO: call to schedule actor to create build
+      //       // wait on reply
+      //       // notify channel of build status
+      //       let payload = {
+      //         text: `:shell: Rollback initiated by ${userString}`,
+      //       }
+      //       this.postMessage(payload)
+      //       try {
+      //         const reply = await this.bitMQ.requestAndReply(
+      //           config.serviceName.bit,
+      //           "rollBackPreviousBuild",
+      //           slackResponse
+      //         )
+      //       } catch (err) {
+      //         const errPayload = {
+      //           text: `:sos: Error completing Rollback made by ${userString}. Details: \`${
+      //             err.message
+      //           }\``,
+      //         }
+      //         this.postMessage(errPayload)
+      //       }
+      //     }
+      //     return {}
+      //   },
+      // },
+    }
+
+    return handlers
   }
 
   // Command Handlers ========================================================
 
-  async handlePullRequest(message) {
+  async doTest(data) {
+    this.log.info(`doTest data: ${JSON.stringify(data, null, 2)}`)
+    return true
+  }
+
+  async doStartBuild(data) {
+    this.log.info(`doStartBuild ${JSON.stringify(data, null, 2)}`)
+    const message = data.message
+    const userString = `<@${message.user}>`
+    const payload = {
+      text: `:building_construction: A Build request made by ${userString}`,
+    }
+    this.postMessage(payload)
+
+    // try {
+    //   const reply = await this.bitMQ.requestAndReply(
+    //     config.serviceName.bit,
+    //     "runBuild",
+    //     message
+    //   )
+    // } catch (err) {
+    //   const errPayload = {
+    //     text: `:sos: Error completing Build made by ${userString}. Details: \`${
+    //       err.message
+    //     }\``,
+    //   }
+    //   this.postMessage(errPayload)
+    // }
+    return true
+  }
+
+  async doStopBuild(data) {
+    this.log.info(`doStopBuild data: ${JSON.stringify(data, null, 2)}`)
+    return true
+  }
+
+  async doCreatePullRequest(message) {
     this.log.info(`handlePullRequest: ${JSON.stringify(message, null, 2)}`)
     const userString = `<@${message.user}>`
 
@@ -417,29 +508,6 @@ export class SlackHandlers {
       }
     }
     return {}
-  }
-
-  async handleBuild(message) {
-    const userString = `<@${message.user}>`
-    const payload = {
-      text: `:building_construction: A Build request made by ${userString}`,
-    }
-    this.postMessage(payload)
-
-    try {
-      const reply = await this.bitMQ.requestAndReply(
-        config.serviceName.bit,
-        "runBuild",
-        message
-      )
-    } catch (err) {
-      const errPayload = {
-        text: `:sos: Error completing Build made by ${userString}. Details: \`${
-          err.message
-        }\``,
-      }
-      this.postMessage(errPayload)
-    }
   }
 
   // End Command Handlers ======================================================

@@ -43,6 +43,7 @@ const slackGrammar = String.raw`
 
     // commands -----------
     testCommand : @ < test ;
+    helpCommand : @ < help argumentList ;
     startBuildCommand : @ < start ? < build argumentList ;
     stopBuildCommand : @ < stop < build number  ;
     createPullRequestCommand : @ < create ? < pullRequest argumentList ;
@@ -51,6 +52,7 @@ const slackGrammar = String.raw`
     statusCommand : @ < show? < status  ;
     startDaemonCommand : @ < start < daemon ;
     stopDaemonCommand : @ < stop < daemon ;
+    showReportCommand : @ < show < report ;
 
     // tokens ----------------------
     argumentList : argument argument * ;
