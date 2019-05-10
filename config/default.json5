@@ -1,5 +1,5 @@
 {
-  logDir: "",
+  logDir: "./log/",
   actors: [
     { name: "web" },
     { name: "integration" },
