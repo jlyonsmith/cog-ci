@@ -89,7 +89,13 @@ export function getLog(serviceName) {
   } else {
     const pretty = pinoExpress.pretty({})
     pretty.pipe(process.stdout)
-    log = pino({ name: serviceName }, pretty)
+    // log = pino({ name: serviceName }, pretty)
+    log = pino(
+      { name: serviceName },
+      fs.createWriteStream(
+        path.join(config.get("logDir"), serviceName + ".log")
+      )
+    )
   }
 
   return log
