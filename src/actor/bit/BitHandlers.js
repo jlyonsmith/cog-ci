@@ -6,7 +6,7 @@ const bb = new Bitbucket()
 
 const regexOptions = {
   repoUser: /^.*?\brepo:\s+(.*)\b.*?/m,
-  repoBranch: /^.*?\brepo:\s+([a-zA-Z0-9\-_]+).*?\s+branch:\s+([a-zA-Z0-9\-_]+)()?\s+username:\s+([a-zA-Z0-9_\-]+)/m,
+  repoBranch: /^.*?\brepo:\s+([a-zA-Z0-9\-_]+).*?\s+branch:\s+([a-zA-Z0-9\-_]+).*?\s+username:\s+([a-zA-Z0-9_\-]+)/m,
   repoUserTitleBranch: /^.*?\brepo:\s+(.*)\b.*?\s+\btitle:\s+(.*)\b.*?\s+\bbranch:\s+(.*)\b.*?/m,
 }
 

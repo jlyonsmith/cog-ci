@@ -39,7 +39,7 @@ export class WebhookRoutes {
   async getWebhook(req, res, next) {
     const BBCloudEvent = req.headers["x-event-key"]
     const BBCloudRequest = await req.body
-    const username = BBCloudRequest.actor.username
+    const username = BBCloudRequest.actor.nickname
     const repo = BBCloudRequest.repository.full_name
     const link = BBCloudRequest.repository.links.html.href
     const author = BBCloudRequest.actor.display_name
