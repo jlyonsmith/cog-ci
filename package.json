@@ -52,7 +52,7 @@
     "fs-extra": "^7.0.1",
     "http-errors": "^1.7.2",
     "mongodb": "^3.2.4",
-    "mongoose": "^5.5.7",
+    "mongoose": "^5.7.5",
     "mongoose-doc-merge": "^1.0.1",
     "pino": "^5.12.3",
     "pino-pretty-express": "^1.0.4",
