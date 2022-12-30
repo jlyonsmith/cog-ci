@@ -48,7 +48,7 @@
     "cors": "^2.8.5",
     "eventemitter3": "^3.1.2",
     "express": "^4.16.4",
-    "flat": "^4.1.0",
+    "flat": "^5.0.1",
     "fs-extra": "^7.0.1",
     "http-errors": "^1.7.2",
     "mongodb": "^3.2.4",
